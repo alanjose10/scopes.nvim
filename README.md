@@ -30,7 +30,7 @@ Using [lazy.nvim](https://github.com/folke/lazy.nvim):
 
 ```lua
 {
-  "alan/scopes.nvim",
+  "alanjose10/scopes.nvim",
   dependencies = { "folke/snacks.nvim" },
   opts = {},
 }
