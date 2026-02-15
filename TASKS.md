@@ -19,54 +19,54 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 1.1 Language Definitions
 
-- [ ] Create `lua/scopes/languages/go.lua` — scope node types (`function_declaration`, `method_declaration`, `func_literal`, `if_statement`, `for_statement`, `select_statement`) and symbol node types (`var_spec`, `const_spec`, `short_var_declaration`, `type_declaration`)
-- [ ] Create `lua/scopes/languages/lua.lua` — scope node types (`function_declaration`, `function_definition`, `if_statement`, `for_statement`, `while_statement`) and symbol node types (`assignment_statement`, `local_declaration`)
+- [x] Create `lua/scopes/languages/go.lua` — scope node types (`function_declaration`, `method_declaration`, `func_literal`, `if_statement`, `for_statement`, `select_statement`) and symbol node types (`var_spec`, `const_spec`, `short_var_declaration`, `type_declaration`)
+- [x] Create `lua/scopes/languages/lua.lua` — scope node types (`function_declaration`, `function_definition`, `if_statement`, `for_statement`, `while_statement`) and symbol node types (`assignment_statement`, `variable_declaration`)
 
 ### 1.2 Treesitter Backend
 
-- [ ] Create `lua/scopes/backends/treesitter.lua` — accept `bufnr`, get Treesitter parse tree, walk nodes, and return a `ScopeTree`
-- [ ] Implement `ScopeNode` class: `name`, `kind`, `range` (`{start_row, start_col, end_row, end_col}`), `children`, `parent`
-- [ ] Implement `ScopeTree` class: `root` (virtual file-level node), `source` (`"treesitter"`), `bufnr`
-- [ ] Resolve node names from Treesitter (extract identifier/name child from scope nodes)
-- [ ] Load language-specific scope/symbol types from `lua/scopes/languages/`; fall back to generic heuristics for unsupported languages
-- [ ] Handle Treesitter ERROR nodes — include in tree with a visual indicator flag
-- [ ] Write `tests/tree_spec.lua` — parse fixture files, assert tree structure (depth, node names, kinds, parent links)
+- [x] Create `lua/scopes/backends/treesitter.lua` — accept `bufnr`, get Treesitter parse tree, walk nodes, and return a `ScopeTree`
+- [x] Implement `ScopeNode` class: `name`, `kind`, `range` (`{start_row, start_col, end_row, end_col}`), `children`, `parent`
+- [x] Implement `ScopeTree` class: `root` (virtual file-level node), `source` (`"treesitter"`), `bufnr`
+- [x] Resolve node names from Treesitter (extract identifier/name child from scope nodes)
+- [x] Load language-specific scope/symbol types from `lua/scopes/languages/`; fall back to generic heuristics for unsupported languages
+- [x] Handle Treesitter ERROR nodes — include in tree with a visual indicator flag
+- [x] Write `tests/tree_spec.lua` — parse fixture files, assert tree structure (depth, node names, kinds, parent links)
 
 ### 1.3 Navigator
 
-- [ ] Create `lua/scopes/navigator.lua` — state machine holding `current_node`, `breadcrumb` path, cursor position
-- [ ] Implement `Navigator:new(scope_tree, opts)` — initialize at file root or at scope containing cursor position
-- [ ] Implement `Navigator:items()` — return list of children of current node (for picker display)
-- [ ] Implement `Navigator:drill_down(node)` — set current node to selected child scope, update breadcrumb
-- [ ] Implement `Navigator:go_up()` — move current node to parent; no-op at root
-- [ ] Implement `Navigator:enter(node)` — return target buffer position for jumping
-- [ ] Implement `Navigator:breadcrumb()` — return formatted breadcrumb string (e.g., `file.go > MyStruct > HandleRequest`)
-- [ ] Write `tests/navigator_spec.lua` — test drill-down, go-up, enter, breadcrumb, root boundary
+- [x] Create `lua/scopes/navigator.lua` — state machine holding `current_node`, `breadcrumb` path, cursor position
+- [x] Implement `Navigator:new(scope_tree, opts)` — initialize at file root or at scope containing cursor position
+- [x] Implement `Navigator:items()` — return list of children of current node (for picker display)
+- [x] Implement `Navigator:drill_down(node)` — set current node to selected child scope, update breadcrumb
+- [x] Implement `Navigator:go_up()` — move current node to parent; no-op at root
+- [x] Implement `Navigator:enter(node)` — return target buffer position for jumping
+- [x] Implement `Navigator:breadcrumb()` — return formatted breadcrumb string (e.g., `file.go > MyStruct > HandleRequest`)
+- [x] Write `tests/navigator_spec.lua` — test drill-down, go-up, enter, breadcrumb, root boundary
 
 ### 1.4 Tree Builder (facade)
 
-- [ ] Create `lua/scopes/tree.lua` — public `build(bufnr, opts)` function that selects backend based on config (`"auto"` / `"treesitter"` / `"lsp"`) and returns a `ScopeTree`
-- [ ] Implement cursor-to-scope resolution: given a cursor position and a `ScopeTree`, find the deepest scope containing the cursor
-- [ ] Add debounced caching: store last tree per buffer, re-build on `TextChanged`/`BufEnter` with configurable debounce (`cache.debounce_ms`)
+- [x] Create `lua/scopes/tree.lua` — public `build(bufnr, opts)` function that selects backend based on config (`"auto"` / `"treesitter"` / `"lsp"`) and returns a `ScopeTree`
+- [x] Implement cursor-to-scope resolution: given a cursor position and a `ScopeTree`, find the deepest scope containing the cursor
+- [x] Add debounced caching: store last tree per buffer, re-build on `TextChanged`/`BufEnter` with configurable debounce (`cache.debounce_ms`)
 
 ### 1.5 Snacks.picker Integration
 
-- [ ] Create `lua/scopes/picker.lua` — snacks.picker custom source
-- [ ] Format picker items: symbol name, kind label, line number
-- [ ] Wire `<CR>` (Enter) action — call `Navigator:enter()`, close picker, jump cursor
-- [ ] Wire `<Tab>` action — call `Navigator:drill_down()` on selected item, refresh picker items
-- [ ] Wire `<S-Tab>` action — call `Navigator:go_up()`, refresh picker items
-- [ ] Wire `<Esc>` / `q` — close picker, restore cursor to original position
-- [ ] Display breadcrumb in picker title/header
-- [ ] Fuzzy filtering via snacks.picker built-in text input (no custom work needed, just ensure source refreshes correctly)
-- [ ] Respect picker config: `width`, `height`, `border`
+- [x] Create `lua/scopes/picker.lua` — snacks.picker custom source
+- [x] Format picker items: symbol name, kind label, line number
+- [x] Wire `<CR>` (Enter) action — call `Navigator:enter()`, close picker, jump cursor
+- [x] Wire `<Tab>` action — call `Navigator:drill_down()` on selected item, refresh picker items
+- [x] Wire `<S-Tab>` action — call `Navigator:go_up()`, refresh picker items
+- [x] Wire `<Esc>` / `q` — close picker, restore cursor to original position
+- [x] Display breadcrumb in picker title/header
+- [x] Fuzzy filtering via snacks.picker built-in text input (no custom work needed, just ensure source refreshes correctly)
+- [x] Respect picker config: `width`, `height`, `border`
 
 ### 1.6 Integration & Commands
 
-- [ ] Wire `lua/scopes/init.lua` `setup()` to register keymaps (`<leader>ss` open at cursor, `<leader>sS` open at root)
-- [ ] Implement `:ScopeOpen` command — open picker at cursor scope
-- [ ] Implement `:ScopeBrowse` command — open picker at file root
-- [ ] Add autocommand to invalidate cached tree on `TextChanged` / `BufWritePost`
+- [x] Wire `lua/scopes/init.lua` `setup()` to register keymaps (`<leader>ss` open at cursor, `<leader>sS` open at root)
+- [x] Implement `:ScopeOpen` command — open picker at cursor scope
+- [x] Implement `:ScopeBrowse` command — open picker at file root
+- [x] Add autocommand to invalidate cached tree on `TextChanged` / `BufWritePost`
 
 ### 1.7 MVP Smoke Testing
 

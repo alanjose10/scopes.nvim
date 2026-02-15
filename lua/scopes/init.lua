@@ -34,8 +34,45 @@ function M.open(opts)
     return
   end
 
-  -- TODO: Phase 1 — build tree, create navigator, open picker
-  vim.notify("scopes.nvim: picker not yet implemented", vim.log.levels.INFO)
+  local bufnr = vim.api.nvim_get_current_buf()
+  local tree_mod = require("scopes.tree")
+
+  -- Build the scope tree
+  local scope_tree, err = tree_mod.build(bufnr)
+  if not scope_tree then
+    vim.notify("scopes.nvim: " .. (err or "failed to build scope tree"), vim.log.levels.WARN)
+    return
+  end
+
+  -- Set up cache invalidation autocommands for this buffer
+  tree_mod.setup_autocmds(bufnr)
+
+  -- Create navigator
+  local Navigator = require("scopes.navigator")
+  local nav_opts = {}
+
+  if not opts.root then
+    -- Open at cursor position
+    local cursor = vim.api.nvim_win_get_cursor(0)
+    nav_opts.cursor_row = cursor[1] - 1 -- Convert to 0-indexed
+  end
+
+  local navigator = Navigator:new(scope_tree, nav_opts)
+
+  -- Get filename for breadcrumb display
+  local filename = vim.api.nvim_buf_get_name(bufnr)
+  if filename ~= "" then
+    filename = vim.fn.fnamemodify(filename, ":t")
+  else
+    filename = "[No Name]"
+  end
+
+  -- Open picker
+  local picker = require("scopes.picker")
+  picker.open(navigator, {
+    filename = filename,
+    bufnr = bufnr,
+  })
 end
 
 return M
