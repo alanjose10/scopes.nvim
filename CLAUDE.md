@@ -61,7 +61,9 @@ Four layers, each independently testable:
 
 ## Testing
 
-Tests use plenary.nvim:
+**Every module must have a corresponding `_spec.lua` file. Every public function must have at least one test. No code lands without tests.**
+
+### Running Tests
 
 ```bash
 # Run all tests
@@ -70,6 +72,110 @@ nvim --headless -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/minimal
 # Run a single test file
 nvim --headless -c "PlenaryBustedFile tests/tree_spec.lua {minimal_init = 'tests/minimal_init.lua'}"
 ```
+
+`tests/minimal_init.lua` should load plenary and set up the Treesitter Go/Lua parsers.
+
+### Test File Structure
+
+One spec file per module, mirroring the source layout:
+
+```
+lua/scope/tree.lua         → tests/tree_spec.lua
+lua/scope/navigator.lua    → tests/navigator_spec.lua
+lua/scope/config.lua       → tests/config_spec.lua
+lua/scope/picker.lua       → tests/picker_spec.lua
+lua/scope/languages/go.lua → tests/languages/go_spec.lua
+```
+
+### Test Conventions
+
+Use plenary busted-style with `describe` / `it` / `before_each` / `after_each`:
+
+```lua
+local tree = require("scope.tree")
+
+describe("tree", function()
+  describe("build_from_treesitter", function()
+    local scope_tree
+
+    before_each(function()
+      -- Load fixture into a buffer, build the tree
+      local bufnr = vim.api.nvim_create_buf(false, true)
+      local lines = vim.fn.readfile("tests/fixtures/sample.go")
+      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+      vim.api.nvim_buf_set_option(bufnr, "filetype", "go")
+      -- Allow treesitter to parse
+      vim.treesitter.start(bufnr, "go")
+      scope_tree = tree.build_from_treesitter(bufnr, require("scope.languages.go"))
+    end)
+
+    it("returns a ScopeTree with source set to treesitter", function()
+      assert.are.equal("treesitter", scope_tree.source)
+    end)
+
+    it("root has children matching top-level declarations", function()
+      assert.is_true(#scope_tree.root.children > 0)
+    end)
+
+    it("sets parent back-references on all children", function()
+      for _, child in ipairs(scope_tree.root.children) do
+        assert.are.equal(scope_tree.root, child.parent)
+      end
+    end)
+  end)
+end)
+```
+
+### What to Test
+
+For each module, cover these categories:
+
+**tree.lua / backends/**
+- Correct tree shape from fixture files (right number of children, correct nesting)
+- Parent back-references set correctly at every level
+- Symbol names extracted correctly
+- Symbol kinds mapped correctly
+- ERROR nodes flagged with `is_error = true` but still present in tree
+- Broken fixture file (`sample_broken.go`) doesn't crash, returns partial tree
+- Empty buffer returns a root with no children
+
+**navigator.lua**
+- `drill_down()` on a scope node changes `children()` to that node's children
+- `drill_down()` on a leaf node is a no-op (returns false or nil)
+- `go_up()` restores parent's children and breadcrumb
+- `go_up()` at root is a no-op
+- `enter()` returns correct range for the selected item
+- `breadcrumb_string()` reflects current path after drill/up operations
+- `open_at_cursor()` finds the correct deepest scope for a given row
+- `open_at_cursor()` at a line outside any scope falls back to root
+- Sequence tests: drill → drill → up → up returns to original state
+- Sequence tests: drill → enter returns range from within the drilled scope
+
+**config.lua**
+- `setup({})` with empty table uses all defaults
+- User overrides merge correctly (nested tables deep-merged, not replaced)
+- Invalid values are rejected or warned about (e.g., `backend = "invalid"`)
+- Keymaps are overridable
+
+**languages/*.lua**
+- `scope_types` list contains only valid Treesitter node type strings for that language
+- `symbol_types` list contains only valid Treesitter node type strings
+- `get_name()` returns expected names from sample TS nodes
+- No overlap between scope_types and symbol_types (a node shouldn't be both, unless intentionally)
+
+**picker.lua**
+- Item formatting: each item has icon, name, kind label, line number
+- Breadcrumb string updates after drill/up
+- Edge cases: drill on leaf, go_up at root, empty scope (no children to show)
+
+### Rules
+
+- **Never skip tests to save time.** If a function is worth writing, it's worth testing.
+- **Test behaviour, not implementation.** Assert on return values and state changes, not internal details.
+- **Use fixtures, not strings.** Parse real files from `tests/fixtures/`, don't construct fake TS nodes by hand (except in navigator tests where you want isolation from the parser).
+- **Navigator tests must not depend on Treesitter.** Use `helpers.make_test_tree()` or similar hardcoded trees so navigator tests are fast and deterministic.
+- **Clean up buffers in `after_each`.** Delete scratch buffers to avoid leaking state between tests.
+- **Test error paths.** Every function that can fail should have a test proving it fails gracefully (returns nil, logs a warning, etc.) rather than throwing.
 
 ## Conventions
 - **Language**: Lua, targeting Neovim >= 0.10
