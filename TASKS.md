@@ -1,4 +1,4 @@
-# scope.nvim - Task Breakdown
+# scopes.nvim - Task Breakdown
 
 Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency within each phase.
 
@@ -6,11 +6,11 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ## Phase 0: Project Scaffolding
 
-- [x] Create directory structure (`lua/scope/`, `lua/scope/backends/`, `lua/scope/languages/`, `plugin/`, `tests/`, `tests/fixtures/`)
+- [x] Create directory structure (`lua/scopes/`, `lua/scopes/backends/`, `lua/scopes/languages/`, `plugin/`, `tests/`, `tests/fixtures/`)
 - [x] Create `CLAUDE.md` with project context (structure, conventions, testing)
-- [x] Create `lua/scope/config.lua` — default config table, `merge()` function to deep-merge user config with defaults, validation
-- [x] Create `lua/scope/init.lua` — `setup(opts)` entry point that calls config merge
-- [x] Create `plugin/scope.lua` — `:ScopeOpen` and `:ScopeBrowse` user commands (stubs wired to init)
+- [x] Create `lua/scopes/config.lua` — default config table, `merge()` function to deep-merge user config with defaults, validation
+- [x] Create `lua/scopes/init.lua` — `setup(opts)` entry point that calls config merge
+- [x] Create `plugin/scopes.lua` — `:ScopeOpen` and `:ScopeBrowse` user commands (stubs wired to init)
 - [x] Add test fixtures: sample Go file (`tests/fixtures/sample.go`) and Lua file (`tests/fixtures/sample.lua`) with nested scopes
 
 ---
@@ -19,22 +19,22 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 1.1 Language Definitions
 
-- [ ] Create `lua/scope/languages/go.lua` — scope node types (`function_declaration`, `method_declaration`, `func_literal`, `if_statement`, `for_statement`, `select_statement`) and symbol node types (`var_spec`, `const_spec`, `short_var_declaration`, `type_declaration`)
-- [ ] Create `lua/scope/languages/lua.lua` — scope node types (`function_declaration`, `function_definition`, `if_statement`, `for_statement`, `while_statement`) and symbol node types (`assignment_statement`, `local_declaration`)
+- [ ] Create `lua/scopes/languages/go.lua` — scope node types (`function_declaration`, `method_declaration`, `func_literal`, `if_statement`, `for_statement`, `select_statement`) and symbol node types (`var_spec`, `const_spec`, `short_var_declaration`, `type_declaration`)
+- [ ] Create `lua/scopes/languages/lua.lua` — scope node types (`function_declaration`, `function_definition`, `if_statement`, `for_statement`, `while_statement`) and symbol node types (`assignment_statement`, `local_declaration`)
 
 ### 1.2 Treesitter Backend
 
-- [ ] Create `lua/scope/backends/treesitter.lua` — accept `bufnr`, get Treesitter parse tree, walk nodes, and return a `ScopeTree`
+- [ ] Create `lua/scopes/backends/treesitter.lua` — accept `bufnr`, get Treesitter parse tree, walk nodes, and return a `ScopeTree`
 - [ ] Implement `ScopeNode` class: `name`, `kind`, `range` (`{start_row, start_col, end_row, end_col}`), `children`, `parent`
 - [ ] Implement `ScopeTree` class: `root` (virtual file-level node), `source` (`"treesitter"`), `bufnr`
 - [ ] Resolve node names from Treesitter (extract identifier/name child from scope nodes)
-- [ ] Load language-specific scope/symbol types from `lua/scope/languages/`; fall back to generic heuristics for unsupported languages
+- [ ] Load language-specific scope/symbol types from `lua/scopes/languages/`; fall back to generic heuristics for unsupported languages
 - [ ] Handle Treesitter ERROR nodes — include in tree with a visual indicator flag
 - [ ] Write `tests/tree_spec.lua` — parse fixture files, assert tree structure (depth, node names, kinds, parent links)
 
 ### 1.3 Navigator
 
-- [ ] Create `lua/scope/navigator.lua` — state machine holding `current_node`, `breadcrumb` path, cursor position
+- [ ] Create `lua/scopes/navigator.lua` — state machine holding `current_node`, `breadcrumb` path, cursor position
 - [ ] Implement `Navigator:new(scope_tree, opts)` — initialize at file root or at scope containing cursor position
 - [ ] Implement `Navigator:items()` — return list of children of current node (for picker display)
 - [ ] Implement `Navigator:drill_down(node)` — set current node to selected child scope, update breadcrumb
@@ -45,13 +45,13 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 1.4 Tree Builder (facade)
 
-- [ ] Create `lua/scope/tree.lua` — public `build(bufnr, opts)` function that selects backend based on config (`"auto"` / `"treesitter"` / `"lsp"`) and returns a `ScopeTree`
+- [ ] Create `lua/scopes/tree.lua` — public `build(bufnr, opts)` function that selects backend based on config (`"auto"` / `"treesitter"` / `"lsp"`) and returns a `ScopeTree`
 - [ ] Implement cursor-to-scope resolution: given a cursor position and a `ScopeTree`, find the deepest scope containing the cursor
 - [ ] Add debounced caching: store last tree per buffer, re-build on `TextChanged`/`BufEnter` with configurable debounce (`cache.debounce_ms`)
 
 ### 1.5 Snacks.picker Integration
 
-- [ ] Create `lua/scope/picker.lua` — snacks.picker custom source
+- [ ] Create `lua/scopes/picker.lua` — snacks.picker custom source
 - [ ] Format picker items: symbol name, kind label, line number
 - [ ] Wire `<CR>` (Enter) action — call `Navigator:enter()`, close picker, jump cursor
 - [ ] Wire `<Tab>` action — call `Navigator:drill_down()` on selected item, refresh picker items
@@ -63,7 +63,7 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 1.6 Integration & Commands
 
-- [ ] Wire `lua/scope/init.lua` `setup()` to register keymaps (`<leader>ss` open at cursor, `<leader>sS` open at root)
+- [ ] Wire `lua/scopes/init.lua` `setup()` to register keymaps (`<leader>ss` open at cursor, `<leader>sS` open at root)
 - [ ] Implement `:ScopeOpen` command — open picker at cursor scope
 - [ ] Implement `:ScopeBrowse` command — open picker at file root
 - [ ] Add autocommand to invalidate cached tree on `TextChanged` / `BufWritePost`
@@ -82,7 +82,7 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 2.1 LSP Fallback Backend
 
-- [ ] Create `lua/scope/backends/lsp.lua` — request `textDocument/documentSymbol`, convert `DocumentSymbol[]` response into `ScopeTree`
+- [ ] Create `lua/scopes/backends/lsp.lua` — request `textDocument/documentSymbol`, convert `DocumentSymbol[]` response into `ScopeTree`
 - [ ] Map LSP `SymbolKind` enum to display kind strings
 - [ ] Handle LSP returning flat `SymbolInformation[]` (no hierarchy) — build a flat list under root
 - [ ] Handle empty/stale LSP responses — fall back to last known good tree or Treesitter
@@ -99,7 +99,7 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 2.3 Telescope Extension
 
-- [ ] Create Telescope extension adapter in `picker.lua` (or separate `lua/scope/telescope.lua`)
+- [ ] Create Telescope extension adapter in `picker.lua` (or separate `lua/scopes/telescope.lua`)
 - [ ] Implement Telescope finder that returns Navigator items
 - [ ] Wire custom actions for `<Tab>` (drill-down) and `<S-Tab>` (go-up) via Telescope `attach_mappings`
 - [ ] Breadcrumb display in Telescope prompt title
@@ -114,8 +114,8 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 2.5 Additional Language Support
 
-- [ ] Create `lua/scope/languages/typescript.lua` — scope types (`function_declaration`, `arrow_function`, `class_declaration`, `method_definition`, `if_statement`, `for_statement`) and symbol types (`variable_declarator`, `property_signature`, `type_alias_declaration`)
-- [ ] Create `lua/scope/languages/python.lua` — scope types (`function_definition`, `class_definition`, `if_statement`, `for_statement`, `while_statement`, `with_statement`) and symbol types (`assignment`, `global_statement`)
+- [ ] Create `lua/scopes/languages/typescript.lua` — scope types (`function_declaration`, `arrow_function`, `class_declaration`, `method_definition`, `if_statement`, `for_statement`) and symbol types (`variable_declarator`, `property_signature`, `type_alias_declaration`)
+- [ ] Create `lua/scopes/languages/python.lua` — scope types (`function_definition`, `class_definition`, `if_statement`, `for_statement`, `while_statement`, `with_statement`) and symbol types (`assignment`, `global_statement`)
 - [ ] Add test fixtures: `tests/fixtures/sample.ts`, `tests/fixtures/sample.py`
 - [ ] Write tree-building tests for TypeScript and Python fixtures
 - [ ] Test indentation-based Python scoping thoroughly
@@ -158,7 +158,7 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 ### 3.5 Community Language Support
 
 - [ ] Document how to add a new language (contributing guide)
-- [ ] Provide a template `lua/scope/languages/_template.lua`
+- [ ] Provide a template `lua/scopes/languages/_template.lua`
 - [ ] Add generic fallback heuristics for languages without explicit definitions
 - [ ] Accept community PRs for Rust, Java, C/C++, Ruby, etc.
 

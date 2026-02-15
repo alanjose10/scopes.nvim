@@ -1,16 +1,16 @@
---- @class scope.Config
+--- @class scopes.Config
 --- @field backend "treesitter"|"lsp"|"auto"
---- @field keymaps scope.KeymapConfig
---- @field picker scope.PickerConfig
---- @field display scope.DisplayConfig
---- @field treesitter scope.TreesitterConfig
---- @field cache scope.CacheConfig
+--- @field keymaps scopes.KeymapConfig
+--- @field picker scopes.PickerConfig
+--- @field display scopes.DisplayConfig
+--- @field treesitter scopes.TreesitterConfig
+--- @field cache scopes.CacheConfig
 
---- @class scope.KeymapConfig
+--- @class scopes.KeymapConfig
 --- @field open string
 --- @field open_root string
 
---- @class scope.PickerConfig
+--- @class scopes.PickerConfig
 --- @field enter string
 --- @field drill_down string
 --- @field go_up string
@@ -21,21 +21,21 @@
 --- @field height number
 --- @field border string
 
---- @class scope.DisplayConfig
+--- @class scopes.DisplayConfig
 --- @field icons boolean
 --- @field line_numbers boolean
 --- @field breadcrumb boolean
 
---- @class scope.TreesitterConfig
+--- @class scopes.TreesitterConfig
 --- @field scope_types table<string, string[]>
 
---- @class scope.CacheConfig
+--- @class scopes.CacheConfig
 --- @field enabled boolean
 --- @field debounce_ms number
 
 local M = {}
 
---- @type scope.Config
+--- @type scopes.Config
 M.defaults = {
   backend = "auto",
   keymaps = {
@@ -91,19 +91,19 @@ local function deep_merge(base, override)
   return result
 end
 
---- @type scope.Config
+--- @type scopes.Config
 M.current = nil
 
 --- Merge user options with defaults and store as current config.
 --- @param opts? table
---- @return scope.Config
+--- @return scopes.Config
 function M.merge(opts)
   M.current = deep_merge(M.defaults, opts or {})
   return M.current
 end
 
 --- Get the current config, or defaults if setup hasn't been called.
---- @return scope.Config
+--- @return scopes.Config
 function M.get()
   return M.current or M.defaults
 end

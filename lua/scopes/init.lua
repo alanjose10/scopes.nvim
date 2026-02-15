@@ -1,8 +1,8 @@
-local config = require("scope.config")
+local config = require("scopes.config")
 
 local M = {}
 
---- Setup scope.nvim with user options.
+--- Setup scopes.nvim with user options.
 --- @param opts? table
 function M.setup(opts)
   config.merge(opts)
@@ -30,12 +30,12 @@ function M.open(opts)
   local cfg = config.get()
 
   if not cfg then
-    vim.notify("scope.nvim: call require('scope').setup() first", vim.log.levels.WARN)
+    vim.notify("scopes.nvim: call require('scopes').setup() first", vim.log.levels.WARN)
     return
   end
 
   -- TODO: Phase 1 — build tree, create navigator, open picker
-  vim.notify("scope.nvim: picker not yet implemented", vim.log.levels.INFO)
+  vim.notify("scopes.nvim: picker not yet implemented", vim.log.levels.INFO)
 end
 
 return M
