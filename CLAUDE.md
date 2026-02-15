@@ -70,7 +70,7 @@ Four layers, each independently testable:
 nvim --headless -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/minimal_init.lua'}"
 
 # Run a single test file
-nvim --headless -c "PlenaryBustedFile tests/tree_spec.lua {minimal_init = 'tests/minimal_init.lua'}"
+nvim --headless -c "PlenaryBustedDirectory tests/config_spec.lua {minimal_init = 'tests/minimal_init.lua'}"
 ```
 
 `tests/minimal_init.lua` should load plenary and set up the Treesitter Go/Lua parsers.
