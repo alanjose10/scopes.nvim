@@ -69,6 +69,9 @@ Four layers, each independently testable:
 # Run all tests
 nvim --headless -c "PlenaryBustedDirectory tests/ {minimal_init = 'tests/minimal_init.lua'}"
 
+# via makefile
+make test
+
 # Run a single test file
 nvim --headless -c "PlenaryBustedDirectory tests/config_spec.lua {minimal_init = 'tests/minimal_init.lua'}"
 ```
