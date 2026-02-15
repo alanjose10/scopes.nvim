@@ -6,12 +6,12 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ## Phase 0: Project Scaffolding
 
-- [ ] Create directory structure (`lua/scope/`, `lua/scope/backends/`, `lua/scope/languages/`, `plugin/`, `tests/`, `tests/fixtures/`)
-- [ ] Create `CLAUDE.md` with project context (structure, conventions, testing)
-- [ ] Create `lua/scope/config.lua` — default config table, `merge()` function to deep-merge user config with defaults, validation
-- [ ] Create `lua/scope/init.lua` — `setup(opts)` entry point that calls config merge
-- [ ] Create `plugin/scope.lua` — `:ScopeOpen` and `:ScopeBrowse` user commands (stubs wired to init)
-- [ ] Add test fixtures: sample Go file (`tests/fixtures/sample.go`) and Lua file (`tests/fixtures/sample.lua`) with nested scopes
+- [x] Create directory structure (`lua/scope/`, `lua/scope/backends/`, `lua/scope/languages/`, `plugin/`, `tests/`, `tests/fixtures/`)
+- [x] Create `CLAUDE.md` with project context (structure, conventions, testing)
+- [x] Create `lua/scope/config.lua` — default config table, `merge()` function to deep-merge user config with defaults, validation
+- [x] Create `lua/scope/init.lua` — `setup(opts)` entry point that calls config merge
+- [x] Create `plugin/scope.lua` — `:ScopeOpen` and `:ScopeBrowse` user commands (stubs wired to init)
+- [x] Add test fixtures: sample Go file (`tests/fixtures/sample.go`) and Lua file (`tests/fixtures/sample.lua`) with nested scopes
 
 ---
 
