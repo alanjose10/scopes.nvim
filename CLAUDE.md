@@ -179,6 +179,9 @@ For each module, cover these categories:
 - **Navigator tests must not depend on Treesitter.** Use `helpers.make_test_tree()` or similar hardcoded trees so navigator tests are fast and deterministic.
 - **Clean up buffers in `after_each`.** Delete scratch buffers to avoid leaking state between tests.
 - **Test error paths.** Every function that can fail should have a test proving it fails gracefully (returns nil, logs a warning, etc.) rather than throwing.
+- **Use TDD wherever possible.** Write the test first, watch it fail, then implement the code to make it pass. When starting a new function or module, begin by writing the spec file with test cases that define the expected behaviour,
+  then implement the source to satisfy them. This applies to all pure logic (tree building, navigator state, config merging, language configs).
+  The only exception are the cases where manual testing against a live Neovim instance is more practical or unless explicitly instructed to not do TDD.
 
 ## Conventions
 - **Language**: Lua, targeting Neovim >= 0.10
