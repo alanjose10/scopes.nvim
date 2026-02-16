@@ -45,8 +45,10 @@ tests/fixtures/             -- sample source files for testing
 --- @field lang string            -- Language identifier
 
 --- @class LangConfig
---- @field scope_types string[]   -- Treesitter node types that create scopes (can be drilled into)
---- @field symbol_types string[]  -- Treesitter node types that appear as items in a scope
+--- @field node_types table<string, {kind: string, is_scope: boolean}>  -- Source of truth for node type mappings
+--- @field scope_types string[]   -- (derived from node_types) Treesitter node types that create scopes
+--- @field symbol_types string[]  -- (derived from node_types) Treesitter node types that appear as items
+--- @field kind_map table<string, string>  -- (derived from node_types) Maps node type to kind string
 --- @field get_name fun(node: TSNode, source: number): string  -- Extract display name from a TS node
 ```
 

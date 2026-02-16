@@ -65,6 +65,98 @@ describe("languages.go", function()
     end)
   end)
 
+  describe("kind_map", function()
+    it("is a table", function()
+      assert.are.equal("table", type(go.kind_map))
+    end)
+
+    it("has an entry for every scope_type", function()
+      for _, st in ipairs(go.scope_types) do
+        assert.is_truthy(go.kind_map[st], "missing kind_map entry for scope_type: " .. st)
+      end
+    end)
+
+    it("has an entry for every symbol_type", function()
+      for _, st in ipairs(go.symbol_types) do
+        assert.is_truthy(go.kind_map[st], "missing kind_map entry for symbol_type: " .. st)
+      end
+    end)
+
+    it("all values are valid kind strings", function()
+      local valid_kinds = {
+        ["function"] = true,
+        ["method"] = true,
+        ["variable"] = true,
+        ["type"] = true,
+        ["const"] = true,
+        ["block"] = true,
+        ["class"] = true,
+      }
+      for node_type, kind in pairs(go.kind_map) do
+        assert.is_true(valid_kinds[kind], "invalid kind '" .. kind .. "' for node type '" .. node_type .. "'")
+      end
+    end)
+  end)
+
+  describe("node_types", function()
+    it("is a non-empty table", function()
+      assert.are.equal("table", type(go.node_types))
+      local count = 0
+      for _ in pairs(go.node_types) do
+        count = count + 1
+      end
+      assert.is_true(count > 0)
+    end)
+
+    it("every entry has kind (string) and is_scope (boolean)", function()
+      for node_type, info in pairs(go.node_types) do
+        assert.are.equal("string", type(info.kind), "kind missing or not string for " .. node_type)
+        assert.are.equal("boolean", type(info.is_scope), "is_scope missing or not boolean for " .. node_type)
+      end
+    end)
+
+    it("all kind values are valid kind strings", function()
+      local valid_kinds = {
+        ["function"] = true,
+        ["method"] = true,
+        ["variable"] = true,
+        ["type"] = true,
+        ["const"] = true,
+        ["block"] = true,
+        ["class"] = true,
+      }
+      for node_type, info in pairs(go.node_types) do
+        assert.is_true(valid_kinds[info.kind], "invalid kind '" .. info.kind .. "' for node type '" .. node_type .. "'")
+      end
+    end)
+
+    it("derived scope_types matches entries where is_scope == true", function()
+      for node_type, info in pairs(go.node_types) do
+        if info.is_scope then
+          assert.is_true(vim.tbl_contains(go.scope_types, node_type), node_type .. " should be in scope_types")
+        else
+          assert.is_false(vim.tbl_contains(go.scope_types, node_type), node_type .. " should not be in scope_types")
+        end
+      end
+    end)
+
+    it("derived symbol_types matches entries where is_scope == false", function()
+      for node_type, info in pairs(go.node_types) do
+        if not info.is_scope then
+          assert.is_true(vim.tbl_contains(go.symbol_types, node_type), node_type .. " should be in symbol_types")
+        else
+          assert.is_false(vim.tbl_contains(go.symbol_types, node_type), node_type .. " should not be in symbol_types")
+        end
+      end
+    end)
+
+    it("derived kind_map matches node_types entries", function()
+      for node_type, info in pairs(go.node_types) do
+        assert.are.equal(info.kind, go.kind_map[node_type], "kind_map mismatch for " .. node_type)
+      end
+    end)
+  end)
+
   describe("structural checks", function()
     it("scope_types is non-empty", function()
       assert.is_true(#go.scope_types > 0)

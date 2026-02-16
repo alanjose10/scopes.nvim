@@ -3,18 +3,15 @@
 
 --- @type LangConfig
 local M = {
-  scope_types = {
-    "function_declaration",
-    "function_definition",
-    "if_statement",
-    "for_statement",
-    "while_statement",
-    "do_statement",
-  },
-
-  symbol_types = {
-    "assignment_statement",
-    "variable_declaration",
+  node_types = {
+    function_declaration = { kind = "function", is_scope = true },
+    function_definition = { kind = "function", is_scope = true },
+    if_statement = { kind = "block", is_scope = true },
+    for_statement = { kind = "block", is_scope = true },
+    while_statement = { kind = "block", is_scope = true },
+    do_statement = { kind = "block", is_scope = true },
+    assignment_statement = { kind = "variable", is_scope = false },
+    variable_declaration = { kind = "variable", is_scope = false },
   },
 
   --- Extract a human-readable name from a Treesitter node.
@@ -76,5 +73,18 @@ local M = {
     return node_type
   end,
 }
+
+-- Derive scope_types, symbol_types, kind_map from node_types
+M.scope_types = {}
+M.symbol_types = {}
+M.kind_map = {}
+for node_type, info in pairs(M.node_types) do
+  M.kind_map[node_type] = info.kind
+  if info.is_scope then
+    table.insert(M.scope_types, node_type)
+  else
+    table.insert(M.symbol_types, node_type)
+  end
+end
 
 return M

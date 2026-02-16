@@ -3,23 +3,20 @@
 
 --- @type LangConfig
 local M = {
-  scope_types = {
-    "function_declaration",
-    "method_declaration",
-    "func_literal",
-    "if_statement",
-    "for_statement",
-    "select_statement",
-    "type_declaration",
-    "import_declaration",
-  },
-
-  symbol_types = {
-    "var_spec",
-    "const_spec",
-    "short_var_declaration",
-    "field_declaration",
-    "import_spec",
+  node_types = {
+    function_declaration = { kind = "function", is_scope = true },
+    method_declaration = { kind = "method", is_scope = true },
+    func_literal = { kind = "function", is_scope = true },
+    if_statement = { kind = "block", is_scope = true },
+    for_statement = { kind = "block", is_scope = true },
+    select_statement = { kind = "block", is_scope = true },
+    type_declaration = { kind = "type", is_scope = true },
+    import_declaration = { kind = "block", is_scope = true },
+    var_spec = { kind = "variable", is_scope = false },
+    const_spec = { kind = "const", is_scope = false },
+    short_var_declaration = { kind = "variable", is_scope = false },
+    field_declaration = { kind = "variable", is_scope = false },
+    import_spec = { kind = "variable", is_scope = false },
   },
 
   --- Extract a human-readable name from a Treesitter node.
@@ -114,5 +111,18 @@ local M = {
     return node_type
   end,
 }
+
+-- Derive scope_types, symbol_types, kind_map from node_types
+M.scope_types = {}
+M.symbol_types = {}
+M.kind_map = {}
+for node_type, info in pairs(M.node_types) do
+  M.kind_map[node_type] = info.kind
+  if info.is_scope then
+    table.insert(M.scope_types, node_type)
+  else
+    table.insert(M.symbol_types, node_type)
+  end
+end
 
 return M
