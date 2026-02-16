@@ -25,12 +25,12 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 ### 1.2 Treesitter Backend
 
 - [ ] Create `lua/scopes/backends/treesitter.lua` — accept `bufnr`, get Treesitter parse tree, walk nodes, and return a `ScopeTree`
-- [ ] Implement `ScopeNode` class: `name`, `kind`, `range` (`{start_row, start_col, end_row, end_col}`), `children`, `parent`
-- [ ] Implement `ScopeTree` class: `root` (virtual file-level node), `source` (`"treesitter"`), `bufnr`
+- [x] Implement `ScopeNode` class: `name`, `kind`, `range` (`{start_row, start_col, end_row, end_col}`), `children`, `parent`
+- [x] Implement `ScopeTree` class: `root` (virtual file-level node), `source` (`"treesitter"`), `bufnr`
 - [ ] Resolve node names from Treesitter (extract identifier/name child from scope nodes)
 - [ ] Load language-specific scope/symbol types from `lua/scopes/languages/`; fall back to generic heuristics for unsupported languages
 - [ ] Handle Treesitter ERROR nodes — include in tree with a visual indicator flag
-- [ ] Write `tests/tree_spec.lua` — parse fixture files, assert tree structure (depth, node names, kinds, parent links)
+- [x] Write `tests/tree_spec.lua` — parse fixture files, assert tree structure (depth, node names, kinds, parent links)
 
 ### 1.3 Navigator
 

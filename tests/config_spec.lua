@@ -119,10 +119,7 @@ describe("scopes.config", function()
           },
         },
       })
-      assert.are.same(
-        { "function_declaration", "method_declaration" },
-        cfg.treesitter.scope_types.go
-      )
+      assert.are.same({ "function_declaration", "method_declaration" }, cfg.treesitter.scope_types.go)
     end)
 
     it("does not mutate defaults", function()

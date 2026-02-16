@@ -60,10 +60,7 @@ describe("languages.go", function()
   describe("no overlap between scope_types and symbol_types", function()
     it("has no types in both lists", function()
       for _, st in ipairs(go.scope_types) do
-        assert.is_false(
-          vim.tbl_contains(go.symbol_types, st),
-          st .. " is in both scope_types and symbol_types"
-        )
+        assert.is_false(vim.tbl_contains(go.symbol_types, st), st .. " is in both scope_types and symbol_types")
       end
     end)
   end)
