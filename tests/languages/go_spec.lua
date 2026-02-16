@@ -29,6 +29,10 @@ describe("languages.go", function()
     it("contains type_declaration", function()
       assert.is_true(vim.tbl_contains(go.scope_types, "type_declaration"))
     end)
+
+    it("contains import_declaration", function()
+      assert.is_true(vim.tbl_contains(go.scope_types, "import_declaration"))
+    end)
   end)
 
   describe("symbol_types", function()
@@ -46,6 +50,10 @@ describe("languages.go", function()
 
     it("contains field_declaration", function()
       assert.is_true(vim.tbl_contains(go.symbol_types, "field_declaration"))
+    end)
+
+    it("contains import_spec", function()
+      assert.is_true(vim.tbl_contains(go.symbol_types, "import_spec"))
     end)
   end)
 
@@ -195,6 +203,24 @@ describe("languages.go", function()
       end
       assert.is_true(vim.tbl_contains(names, "Name"))
       assert.is_true(vim.tbl_contains(names, "Count"))
+    end)
+
+    it("returns 'import' for import_declaration", function()
+      local root = get_root()
+      local nodes = find_nodes(root, "import_declaration")
+      assert.is_true(#nodes > 0, "expected at least one import_declaration")
+      assert.are.equal("import", go.get_name(nodes[1], bufnr))
+    end)
+
+    it("extracts import_spec path names", function()
+      local root = get_root()
+      local nodes = find_nodes(root, "import_spec")
+      local names = {}
+      for _, node in ipairs(nodes) do
+        table.insert(names, go.get_name(node, bufnr))
+      end
+      assert.is_true(vim.tbl_contains(names, "fmt"))
+      assert.is_true(vim.tbl_contains(names, "strconv"))
     end)
 
     it("returns 'if' for if_statement", function()

@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"strconv"
+)
 
 // Constants at package level
 const MaxRetries = 3
@@ -12,6 +15,10 @@ var DefaultName = "world"
 type MyStruct struct {
 	Name  string
 	Count int
+}
+
+func converStrToInt(a string) (int, error) {
+	return strconv.Atoi(a)
 }
 
 // NewMyStruct creates a new MyStruct.
