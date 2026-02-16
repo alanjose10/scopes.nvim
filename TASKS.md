@@ -27,6 +27,7 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 - [ ] Create `lua/scopes/backends/treesitter.lua` — accept `bufnr`, get Treesitter parse tree, walk nodes, and return a `ScopeTree`
 - [x] Implement `ScopeNode` class: `name`, `kind`, `range` (`{start_row, start_col, end_row, end_col}`), `children`, `parent`
 - [x] Implement `ScopeTree` class: `root` (virtual file-level node), `source` (`"treesitter"`), `bufnr`
+- [x] Add validation to `ScopeNode.new()`, `ScopeNode:add_child()`, and `ScopeTree.new()` — warn-and-continue on invalid inputs
 - [ ] Resolve node names from Treesitter (extract identifier/name child from scope nodes)
 - [ ] Load language-specific scope/symbol types from `lua/scopes/languages/`; fall back to generic heuristics for unsupported languages
 - [ ] Handle Treesitter ERROR nodes — include in tree with a visual indicator flag
@@ -75,6 +76,7 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 - [ ] Verify breadcrumb updates correctly during navigation
 - [ ] Verify fuzzy filtering works within a scope
 - [ ] Verify graceful behavior on files with syntax errors
+- [ ] Revisit validation error handling strategy for ScopeNode/ScopeTree constructors (warn-and-continue vs return nil vs error)
 
 ---
 
