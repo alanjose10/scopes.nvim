@@ -7,3 +7,7 @@ vim.opt.runtimepath:prepend(plugin_root)
 -- Add plenary.nvim (lazy.nvim default location)
 local plenary_path = vim.fn.expand("~/.local/share/nvim/lazy/plenary.nvim")
 vim.opt.runtimepath:prepend(plenary_path)
+
+-- Add nvim-treesitter for parser grammars (Go, Lua, etc.)
+local ts_path = vim.fn.expand("~/.local/share/nvim/lazy/nvim-treesitter")
+vim.opt.runtimepath:prepend(ts_path)

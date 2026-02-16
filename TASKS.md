@@ -19,8 +19,8 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 1.1 Language Definitions
 
-- [ ] Create `lua/scopes/languages/go.lua` — scope node types (`function_declaration`, `method_declaration`, `func_literal`, `if_statement`, `for_statement`, `select_statement`) and symbol node types (`var_spec`, `const_spec`, `short_var_declaration`, `type_declaration`)
-- [ ] Create `lua/scopes/languages/lua.lua` — scope node types (`function_declaration`, `function_definition`, `if_statement`, `for_statement`, `while_statement`) and symbol node types (`assignment_statement`, `local_declaration`)
+- [x] Create `lua/scopes/languages/go.lua` — scope node types (`function_declaration`, `method_declaration`, `func_literal`, `if_statement`, `for_statement`, `select_statement`) and symbol node types (`var_spec`, `const_spec`, `short_var_declaration`, `type_declaration`)
+- [x] Create `lua/scopes/languages/lua.lua` — scope node types (`function_declaration`, `function_definition`, `if_statement`, `for_statement`, `while_statement`) and symbol node types (`assignment_statement`, `local_declaration`)
 
 ### 1.2 Treesitter Backend
 
