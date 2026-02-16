@@ -14,20 +14,6 @@ local function find_by_name(node, name)
   return found
 end
 
---- Helper: find all ScopeNodes with a given kind in the tree.
-local function find_by_kind(node, kind)
-  local found = {}
-  if node.kind == kind then
-    table.insert(found, node)
-  end
-  for _, child in ipairs(node.children) do
-    for _, match in ipairs(find_by_kind(child, kind)) do
-      table.insert(found, match)
-    end
-  end
-  return found
-end
-
 --- Helper: collect all names of direct children.
 local function child_names(node)
   local names = {}
@@ -49,8 +35,7 @@ end
 local function check_ranges(node)
   local r = node.range
   assert.is_truthy(r, "node '" .. node.name .. "' has no range")
-  local start_before_end = r.start_row < r.end_row
-    or (r.start_row == r.end_row and r.start_col <= r.end_col)
+  local start_before_end = r.start_row < r.end_row or (r.start_row == r.end_row and r.start_col <= r.end_col)
   assert.is_true(start_before_end, "invalid range for node '" .. node.name .. "'")
   for _, child in ipairs(node.children) do
     check_ranges(child)
