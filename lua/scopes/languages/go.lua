@@ -4,6 +4,7 @@
 --- @type LangConfig
 local M = {
   node_types = {
+    -- Scoped types
     function_declaration = { kind = "function", is_scope = true },
     method_declaration = { kind = "method", is_scope = true },
     func_literal = { kind = "function", is_scope = true },
@@ -12,11 +13,14 @@ local M = {
     select_statement = { kind = "block", is_scope = true },
     type_declaration = { kind = "type", is_scope = true },
     import_declaration = { kind = "block", is_scope = true },
+
+    -- Non scoped types
     var_spec = { kind = "variable", is_scope = false },
     const_spec = { kind = "const", is_scope = false },
     short_var_declaration = { kind = "variable", is_scope = false },
     field_declaration = { kind = "variable", is_scope = false },
     import_spec = { kind = "variable", is_scope = false },
+    call_expression = { kind = "function", is_scope = false },
   },
 
   --- Extract a human-readable name from a Treesitter node.
@@ -71,10 +75,9 @@ local M = {
     end
 
     if node_type == "field_declaration" then
-      for child in node:iter_children() do
-        if child:type() == "field_identifier" then
-          return vim.treesitter.get_node_text(child, source)
-        end
+      local field = node:field("name")[1]
+      if field then
+        return vim.treesitter.get_node_text(field, source)
       end
     end
 
@@ -106,6 +109,13 @@ local M = {
 
     if node_type == "select_statement" then
       return "select"
+    end
+
+    if node_type == "call_expression" then
+      local fun = node:field("function")[1]
+      if fun then
+        return vim.treesitter.get_node_text(fun, source)
+      end
     end
 
     return node_type

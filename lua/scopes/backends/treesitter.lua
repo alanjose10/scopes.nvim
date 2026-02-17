@@ -43,6 +43,7 @@ local function walk(ts_node, parent_scope, scope_set, symbol_set, lang_config, b
   for child in ts_node:iter_children() do
     local child_type = child:type()
 
+    -- TODO: Need to handle case where a node may or may not be scoped (like nested structs in go)
     if child_type == "ERROR" then
       local error_node = ScopeNode.new({
         name = "[error]",
@@ -90,10 +91,7 @@ function M.build(bufnr, lang_config)
   if not lang_config then
     local config_ok, config = pcall(require, "scopes.languages." .. lang)
     if not config_ok then
-      vim.notify(
-        "scopes.nvim: no language config for '" .. lang .. "'",
-        vim.log.levels.WARN
-      )
+      vim.notify("scopes.nvim: no language config for '" .. lang .. "'", vim.log.levels.WARN)
       -- TODO: implement generic fallback heuristics for unsupported languages
       return nil
     end

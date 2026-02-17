@@ -52,14 +52,14 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 1.5 Snacks.picker Integration
 
-- [ ] Create `lua/scopes/picker.lua` — snacks.picker custom source
-- [ ] Format picker items: symbol name, kind label, line number
-- [ ] Wire `<CR>` (Enter) action — call `Navigator:enter()`, close picker, jump cursor
-- [ ] Wire `<Tab>` action — call `Navigator:drill_down()` on selected item, refresh picker items
-- [ ] Wire `<S-Tab>` action — call `Navigator:go_up()`, refresh picker items
+- [x] Create `lua/scopes/picker.lua` — snacks.picker custom source
+- [x] Format picker items: symbol name, kind label, line number
+- [x] Wire `<CR>` (Enter) action — call `Navigator:enter()`, close picker, jump cursor
+- [x] Wire `<Tab>` action — call `Navigator:drill_down()` on selected item, refresh picker items
+- [x] Wire `<S-Tab>` action — call `Navigator:go_up()`, refresh picker items
 - [ ] Wire `<Esc>` / `q` — close picker, restore cursor to original position
-- [ ] Display breadcrumb in picker title/header
-- [ ] Fuzzy filtering via snacks.picker built-in text input (no custom work needed, just ensure source refreshes correctly)
+- [x] Display breadcrumb in picker title/header
+- [x] Fuzzy filtering via snacks.picker built-in text input (no custom work needed, just ensure source refreshes correctly)
 - [ ] Respect picker config: `width`, `height`, `border`
 
 ### 1.6 Integration & Commands

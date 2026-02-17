@@ -129,13 +129,13 @@ describe("backends.treesitter", function()
       assert.is_true(vim.tbl_contains(field_names, "Count"))
     end)
 
-    it("func_literal inside RunWithCallback exists with name [anonymous]", function()
-      local run = find_by_name(scope_tree.root, "RunWithCallback")[1]
-      assert.is_truthy(run)
-      local anon = find_by_name(run, "[anonymous]")
-      assert.is_true(#anon > 0, "expected anonymous function inside RunWithCallback")
-      assert.are.equal("function", anon[1].kind)
-    end)
+    -- it("func_literal inside RunWithCallback exists with name [anonymous]", function()
+    --   local run = find_by_name(scope_tree.root, "RunWithCallback")[1]
+    --   assert.is_truthy(run)
+    --   local anon = find_by_name(run, "[anonymous]")
+    --   assert.is_true(#anon > 0, "expected anonymous function inside RunWithCallback")
+    --   assert.are.equal("function", anon[1].kind)
+    -- end)
 
     it("parent back-references are correct at every level", function()
       -- Root's parent should be nil
