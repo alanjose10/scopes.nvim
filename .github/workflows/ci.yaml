@@ -14,12 +14,30 @@ jobs:
       - name: Install nvim
         shell: bash
         run: |
+
           mkdir -p /tmp/nvim
-          wget -q https://github.com/neovim/neovim/releases/download/nightly/nvim.appimage -O /tmp/nvim/nvim.appimage
           cd /tmp/nvim
+
+          arch="$(uname -m)"
+          case "$arch" in
+            x86_64)  asset="nvim-linux-x86_64.appimage" ;;
+            aarch64|arm64) asset="nvim-linux-arm64.appimage" ;;
+            *) echo "Unsupported arch: $arch"; exit 1 ;;
+          esac
+
+          url="https://github.com/neovim/neovim/releases/download/nightly/${asset}"
+
+          # Download, and fail if we didn't actually get the binary
+          wget -qO nvim.appimage "$url"
+          test -s nvim.appimage || { echo "Downloaded file is empty (bad URL/404?)"; exit 1; }
+
           chmod a+x ./nvim.appimage
+
+          # Quick sanity check: should not be HTML
+          head -c 4 nvim.appimage | od -An -t x1
+
           ./nvim.appimage --appimage-extract
-          echo "/tmp/nvim/squashfs-root/usr/bin/" >> $GITHUB_PATH
+          echo "/tmp/nvim/squashfs-root/usr/bin" >> "$GITHUB_PATH"
 
       - name: Print nvim version
         shell: bash
