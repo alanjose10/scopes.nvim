@@ -9,7 +9,7 @@ jobs:
     runs-on: Ubuntu-latest
     steps:
 
-      - uses: actions/chechout@v3
+      - uses: actions/checkout@v3
 
       - name: Install nvim
         shell: bash
