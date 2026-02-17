@@ -101,6 +101,11 @@ function ScopeNode:add_child(child)
       )
     end
   end
+  -- TODO: validate that the new child's range does not overlap any existing sibling.
+  -- For siblings on different rows: ranges should be mutually exclusive (no row overlap).
+  -- For siblings sharing the same start_row and end_row: column ranges should also be
+  -- mutually exclusive. Consider emitting at DEBUG level rather than WARN to avoid noise
+  -- from Treesitter ERROR nodes and certain LSP servers that return adjacent/touching ranges.
   child.parent = self
   table.insert(self.children, child)
 end

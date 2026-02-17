@@ -35,14 +35,14 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 1.3 Navigator
 
-- [ ] Create `lua/scopes/navigator.lua` — state machine holding `current_node`, `breadcrumb` path, cursor position
-- [ ] Implement `Navigator:new(scope_tree, opts)` — initialize at file root or at scope containing cursor position
-- [ ] Implement `Navigator:items()` — return list of children of current node (for picker display)
-- [ ] Implement `Navigator:drill_down(node)` — set current node to selected child scope, update breadcrumb
-- [ ] Implement `Navigator:go_up()` — move current node to parent; no-op at root
-- [ ] Implement `Navigator:enter(node)` — return target buffer position for jumping
-- [ ] Implement `Navigator:breadcrumb()` — return formatted breadcrumb string (e.g., `file.go > MyStruct > HandleRequest`)
-- [ ] Write `tests/navigator_spec.lua` — test drill-down, go-up, enter, breadcrumb, root boundary
+- [x] Create `lua/scopes/navigator.lua` — state machine holding `current_node`, `breadcrumb` path, cursor position
+- [x] Implement `Navigator:new(scope_tree, opts)` — initialize at file root or at scope containing cursor position
+- [x] Implement `Navigator:items()` — return list of children of current node (for picker display)
+- [x] Implement `Navigator:drill_down(node)` — set current node to selected child scope, update breadcrumb
+- [x] Implement `Navigator:go_up()` — move current node to parent; no-op at root
+- [x] Implement `Navigator:enter(node)` — return target buffer position for jumping
+- [x] Implement `Navigator:breadcrumb_string()` — return formatted breadcrumb string (e.g., `file.go > MyStruct > HandleRequest`)
+- [x] Write `tests/navigator_spec.lua` — test drill-down, go-up, enter, breadcrumb, root boundary
 
 ### 1.4 Tree Builder (facade)
 
@@ -77,6 +77,7 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 - [ ] Verify fuzzy filtering works within a scope
 - [ ] Verify graceful behavior on files with syntax errors
 - [ ] Revisit validation error handling strategy for ScopeNode/ScopeTree constructors (warn-and-continue vs return nil vs error)
+- [ ] Add sibling-overlap validation to `ScopeNode:add_child()`: warn when the new child's range overlaps an existing sibling's range; for siblings on the same row, also check column ranges are non-overlapping. Decide on log level (WARN vs DEBUG) given that ERROR nodes and some LSP servers can produce touching/overlapping ranges legitimately.
 
 ---
 
