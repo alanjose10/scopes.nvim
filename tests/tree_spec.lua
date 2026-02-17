@@ -382,6 +382,203 @@ describe("ScopeNode", function()
   end)
 end)
 
+describe("find_scope_for_row", function()
+  local tree_mod = require("scopes.tree")
+  local ScopeNode = tree_mod.ScopeNode
+  local ScopeTree = tree_mod.ScopeTree
+
+  --- Build a small test tree for row-lookup tests.
+  ---   root (rows 0–99)
+  ---   ├── funcA  function (rows 5–20)
+  ---   │   └── nested  function (rows 10–15)
+  ---   │       └── x  variable (rows 11–11)  ← leaf
+  ---   └── funcB  function (rows 30–50)
+  local function make_row_tree()
+    local root = ScopeNode.new({
+      name = "root",
+      kind = "module",
+      range = { start_row = 0, start_col = 0, end_row = 99, end_col = 0 },
+    })
+    local func_a = ScopeNode.new({
+      name = "funcA",
+      kind = "function",
+      range = { start_row = 5, start_col = 0, end_row = 20, end_col = 1 },
+    })
+    local nested = ScopeNode.new({
+      name = "nested",
+      kind = "function",
+      range = { start_row = 10, start_col = 2, end_row = 15, end_col = 3 },
+    })
+    local x = ScopeNode.new({
+      name = "x",
+      kind = "variable",
+      range = { start_row = 11, start_col = 4, end_row = 11, end_col = 10 },
+    })
+    local func_b = ScopeNode.new({
+      name = "funcB",
+      kind = "function",
+      range = { start_row = 30, start_col = 0, end_row = 50, end_col = 1 },
+    })
+    local y = ScopeNode.new({
+      name = "y",
+      kind = "variable",
+      range = { start_row = 31, start_col = 2, end_row = 31, end_col = 5 },
+    })
+
+    root:add_child(func_a)
+    func_a:add_child(nested)
+    nested:add_child(x) -- x has no children → leaf, not a scope
+    root:add_child(func_b)
+    func_b:add_child(y) -- give funcB a child so is_scope() == true
+
+    local scope_tree = ScopeTree.new({
+      root = root,
+      source = "treesitter",
+      bufnr = 1,
+      lang = "go",
+    })
+    return scope_tree, { root = root, func_a = func_a, nested = nested, x = x, func_b = func_b, y = y }
+  end
+
+  it("returns the deepest scope containing the row", function()
+    local st = make_row_tree()
+    -- row 12 is inside nested (10–15) which is inside funcA (5–20)
+    local result = tree_mod.find_scope_for_row(st, 12)
+    assert.are.equal("nested", result.name)
+  end)
+
+  it("returns outer scope when row is in a non-scope (leaf) child", function()
+    local st = make_row_tree()
+    -- row 11 has x (leaf) inside nested → nearest scope is nested
+    local result = tree_mod.find_scope_for_row(st, 11)
+    assert.are.equal("nested", result.name)
+  end)
+
+  it("returns nil when row is outside all scopes", function()
+    local st = make_row_tree()
+    -- row 2 is before funcA (starts at row 5)
+    local result = tree_mod.find_scope_for_row(st, 2)
+    assert.is_nil(result)
+  end)
+
+  it("returns nil when row is between two top-level scopes", function()
+    local st = make_row_tree()
+    -- row 25 is between funcA (5–20) and funcB (30–50)
+    local result = tree_mod.find_scope_for_row(st, 25)
+    assert.is_nil(result)
+  end)
+
+  it("returns funcB when row is inside it", function()
+    local st = make_row_tree()
+    local result = tree_mod.find_scope_for_row(st, 40)
+    assert.are.equal("funcB", result.name)
+  end)
+end)
+
+describe("build", function()
+  local tree_mod = require("scopes.tree")
+  local config = require("scopes.config")
+  local bufnr
+
+  before_each(function()
+    config.merge({})
+    bufnr = vim.api.nvim_create_buf(false, true)
+    local lines = vim.fn.readfile("tests/fixtures/sample.go")
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+    vim.treesitter.start(bufnr, "go")
+    tree_mod.invalidate(bufnr)
+  end)
+
+  after_each(function()
+    if vim.api.nvim_buf_is_valid(bufnr) then
+      vim.api.nvim_buf_delete(bufnr, { force = true })
+    end
+  end)
+
+  it("returns a ScopeTree with source = treesitter for a parseable buffer", function()
+    local result = tree_mod.build(bufnr)
+    assert.is_not_nil(result)
+    assert.are.equal("treesitter", result.source)
+  end)
+
+  it("returns nil for a buffer with no parser", function()
+    local warnings = {}
+    local orig = vim.notify
+    vim.notify = function(msg, level)
+      if level == vim.log.levels.WARN then
+        table.insert(warnings, msg)
+      end
+    end
+    local empty_bufnr = vim.api.nvim_create_buf(false, true)
+    local result = tree_mod.build(empty_bufnr)
+    vim.notify = orig
+    assert.is_nil(result)
+    vim.api.nvim_buf_delete(empty_bufnr, { force = true })
+  end)
+
+  it("returns nil and emits a WARN for backend = lsp", function()
+    local warnings = {}
+    local orig = vim.notify
+    vim.notify = function(msg, level)
+      if level == vim.log.levels.WARN then
+        table.insert(warnings, msg)
+      end
+    end
+    local result = tree_mod.build(bufnr, { backend = "lsp" })
+    vim.notify = orig
+    assert.is_nil(result)
+    assert.is_true(#warnings > 0)
+    assert.is_truthy(warnings[1]:find("LSP"))
+  end)
+
+  it("uses treesitter when opts.backend = treesitter", function()
+    local result = tree_mod.build(bufnr, { backend = "treesitter" })
+    assert.is_not_nil(result)
+    assert.are.equal("treesitter", result.source)
+  end)
+end)
+
+describe("cache", function()
+  local tree_mod = require("scopes.tree")
+  local config = require("scopes.config")
+  local bufnr
+
+  before_each(function()
+    config.merge({ cache = { enabled = true, debounce_ms = 300 } })
+    bufnr = vim.api.nvim_create_buf(false, true)
+    local lines = vim.fn.readfile("tests/fixtures/sample.go")
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
+    vim.treesitter.start(bufnr, "go")
+    tree_mod.invalidate(bufnr)
+  end)
+
+  after_each(function()
+    if vim.api.nvim_buf_is_valid(bufnr) then
+      vim.api.nvim_buf_delete(bufnr, { force = true })
+    end
+  end)
+
+  it("two consecutive build() calls return the same object (cache hit)", function()
+    local t1 = tree_mod.build(bufnr)
+    local t2 = tree_mod.build(bufnr)
+    assert.are.equal(t1, t2)
+  end)
+
+  it("returns a new object after invalidate() (cache miss)", function()
+    local t1 = tree_mod.build(bufnr)
+    tree_mod.invalidate(bufnr)
+    local t2 = tree_mod.build(bufnr)
+    assert.are_not.equal(t1, t2)
+  end)
+
+  it("always builds fresh when cache.enabled = false", function()
+    config.merge({ cache = { enabled = false, debounce_ms = 300 } })
+    local t1 = tree_mod.build(bufnr)
+    local t2 = tree_mod.build(bufnr)
+    assert.are_not.equal(t1, t2)
+  end)
+end)
+
 describe("ScopeTree", function()
   describe("new", function()
     it("sets all fields from opts", function()

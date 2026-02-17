@@ -1,35 +1,11 @@
+local tree_mod = require("scopes.tree")
+
 --- @class Navigator
 --- @field _tree       ScopeTree
 --- @field _current    ScopeNode
 --- @field _breadcrumb ScopeNode[]
 local Navigator = {}
 Navigator.__index = Navigator
-
---- Check if a row falls within a range (inclusive on both ends).
---- @param range {start_row: number, end_row: number}
---- @param row number
---- @return boolean
-local function row_in_range(range, row)
-  return row >= range.start_row and row <= range.end_row
-end
-
---- Recursively find the deepest scope node containing `row`.
---- Only descends into children that are scopes (is_scope() == true).
---- @param node ScopeNode
---- @param row number
---- @return ScopeNode|nil
-local function find_deepest_scope(node, row)
-  for _, child in ipairs(node.children) do
-    if child:is_scope() and row_in_range(child.range, row) then
-      local deeper = find_deepest_scope(child, row)
-      if deeper then
-        return deeper
-      end
-      return child
-    end
-  end
-  return nil
-end
 
 --- Create a new Navigator initialised at the tree root.
 --- @param scope_tree ScopeTree
@@ -103,7 +79,7 @@ end
 --- Falls back to root when no scope contains the row.
 --- @param row number
 function Navigator:open_at_cursor(row)
-  local target = find_deepest_scope(self._tree.root, row)
+  local target = tree_mod.find_scope_for_row(self._tree, row)
   if not target then
     self._current = self._tree.root
     self._breadcrumb = { self._tree.root }

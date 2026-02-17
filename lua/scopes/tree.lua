@@ -148,7 +148,105 @@ function ScopeTree.new(opts)
   return self
 end
 
+local config = require("scopes.config")
+
+-- Per-buffer cache: { [bufnr] = { tree = ScopeTree, timestamp = number } }
+local _cache = {}
+
+--- Check if a row falls within a range (inclusive on both ends).
+--- @param range {start_row: number, end_row: number}
+--- @param row number
+--- @return boolean
+local function row_in_range(range, row)
+  return row >= range.start_row and row <= range.end_row
+end
+
+--- Recursively find the deepest scope node containing `row`.
+--- Only descends into children that are scopes (is_scope() == true).
+--- @param node ScopeNode
+--- @param row number
+--- @return ScopeNode|nil
+local function find_deepest_scope_node(node, row)
+  for _, child in ipairs(node.children) do
+    if child:is_scope() and row_in_range(child.range, row) then
+      local deeper = find_deepest_scope_node(child, row)
+      return deeper or child
+    end
+  end
+  return nil
+end
+
+--- Find the deepest scope in `scope_tree` that contains `row`.
+--- Returns nil when no scope contains the row; callers fall back to root.
+--- @param scope_tree ScopeTree
+--- @param row number
+--- @return ScopeNode|nil
+local function find_scope_for_row(scope_tree, row)
+  return find_deepest_scope_node(scope_tree.root, row)
+end
+
+--- Evict the cached tree for `bufnr`.
+--- @param bufnr number
+local function invalidate(bufnr)
+  _cache[bufnr] = nil
+end
+
+--- Build a ScopeTree for `bufnr`, dispatching to the configured backend.
+--- Returns a cached tree if one exists and was built within cache.debounce_ms.
+--- @param bufnr number
+--- @param opts? { backend?: string, lang_config?: table }
+--- @return ScopeTree|nil
+local function build(bufnr, opts)
+  opts = opts or {}
+  local cfg = config.get()
+
+  if cfg.cache.enabled then
+    local entry = _cache[bufnr]
+    if entry and (vim.uv.now() - entry.timestamp) < cfg.cache.debounce_ms then
+      return entry.tree
+    end
+  end
+
+  local backend = opts.backend or cfg.backend
+  local result = nil
+
+  if backend == "treesitter" or backend == "auto" then
+    local ok, ts = pcall(require, "scopes.backends.treesitter")
+    if ok then
+      result = ts.build(bufnr, opts.lang_config)
+    end
+  end
+
+  if backend == "lsp" then
+    vim.notify("scopes.nvim: LSP backend not yet implemented", vim.log.levels.WARN)
+  end
+
+  if result and cfg.cache.enabled then
+    _cache[bufnr] = { tree = result, timestamp = vim.uv.now() }
+  end
+
+  return result
+end
+
+-- Invalidate cache on text changes and buffer entry.
+vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI", "BufEnter" }, {
+  group = vim.api.nvim_create_augroup("scopes_cache_invalidate", { clear = true }),
+  callback = function(ev)
+    invalidate(ev.buf)
+  end,
+})
+-- Clean up cache when a buffer is unloaded.
+vim.api.nvim_create_autocmd({ "BufUnload", "BufWipeout" }, {
+  group = vim.api.nvim_create_augroup("scopes_cache_cleanup", { clear = true }),
+  callback = function(ev)
+    invalidate(ev.buf)
+  end,
+})
+
 return {
   ScopeNode = ScopeNode,
   ScopeTree = ScopeTree,
+  find_scope_for_row = find_scope_for_row,
+  invalidate = invalidate,
+  build = build,
 }

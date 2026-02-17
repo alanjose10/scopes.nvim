@@ -46,9 +46,9 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 1.4 Tree Builder (facade)
 
-- [ ] Create `lua/scopes/tree.lua` — public `build(bufnr, opts)` function that selects backend based on config (`"auto"` / `"treesitter"` / `"lsp"`) and returns a `ScopeTree`
-- [ ] Implement cursor-to-scope resolution: given a cursor position and a `ScopeTree`, find the deepest scope containing the cursor
-- [ ] Add debounced caching: store last tree per buffer, re-build on `TextChanged`/`BufEnter` with configurable debounce (`cache.debounce_ms`)
+- [x] Create `lua/scopes/tree.lua` — public `build(bufnr, opts)` function that selects backend based on config (`"auto"` / `"treesitter"` / `"lsp"`) and returns a `ScopeTree`
+- [x] Implement cursor-to-scope resolution: given a cursor position and a `ScopeTree`, find the deepest scope containing the cursor
+- [x] Add debounced caching: store last tree per buffer, re-build on `TextChanged`/`BufEnter` with configurable debounce (`cache.debounce_ms`)
 
 ### 1.5 Snacks.picker Integration
 
