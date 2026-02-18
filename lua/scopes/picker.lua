@@ -60,6 +60,7 @@ function M.open(nav, bufnr)
 
   local buf_name = vim.api.nvim_buf_get_name(bufnr)
   local main_win = vim.api.nvim_get_current_win()
+  local original_cursor = vim.api.nvim_win_get_cursor(main_win)
 
   Snacks.picker({
     title = nav:breadcrumb_string(),
@@ -94,6 +95,13 @@ function M.open(nav, bufnr)
         end
       end,
 
+      cancel = function(picker)
+        picker:close()
+        if vim.api.nvim_win_is_valid(main_win) then
+          vim.api.nvim_win_set_cursor(main_win, original_cursor)
+        end
+      end,
+
       scope_up = function(picker)
         -- Focus on the node's parent when going up in scope
         local prev_node = nav:current()
@@ -119,6 +127,7 @@ function M.open(nav, bufnr)
         keys = {
           ["<Tab>"] = { "scope_drill", mode = { "i", "n" } },
           ["<S-Tab>"] = { "scope_up", mode = { "i", "n" } },
+          ["<Esc>"] = { "cancel", mode = { "n" } },
         },
       },
     },
