@@ -1,6 +1,7 @@
 name: CI
 on:
   push:
+  pull_request:
 
 jobs:
 
@@ -9,12 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
 
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install nvim
         shell: bash
         run: |
-
           mkdir -p /tmp/nvim
           cd /tmp/nvim
 
@@ -25,26 +25,32 @@ jobs:
             *) echo "Unsupported arch: $arch"; exit 1 ;;
           esac
 
-          url="https://github.com/neovim/neovim/releases/download/nightly/${asset}"
+          url="https://github.com/neovim/neovim/releases/download/stable/${asset}"
 
-          # Download, and fail if we didn't actually get the binary
           wget -qO nvim.appimage "$url"
           test -s nvim.appimage || { echo "Downloaded file is empty (bad URL/404?)"; exit 1; }
 
           chmod a+x ./nvim.appimage
-
-          # Quick sanity check: should not be HTML
-          head -c 4 nvim.appimage | od -An -t x1
-
           ./nvim.appimage --appimage-extract
           echo "/tmp/nvim/squashfs-root/usr/bin" >> "$GITHUB_PATH"
 
       - name: Print nvim version
-        shell: bash
+        run: nvim --version
+
+      - name: Install test dependencies
         run: |
-          nvim --version
+          mkdir -p /tmp/nvim-plugins
+          git clone --depth=1 https://github.com/nvim-lua/plenary.nvim     /tmp/nvim-plugins/plenary.nvim
+          git clone --depth=1 https://github.com/nvim-treesitter/nvim-treesitter /tmp/nvim-plugins/nvim-treesitter
+          git clone --depth=1 https://github.com/folke/snacks.nvim          /tmp/nvim-plugins/snacks.nvim
+
+      - name: Install Treesitter parsers
+        run: |
+          nvim --headless \
+            --cmd "set rtp+=/tmp/nvim-plugins/nvim-treesitter" \
+            -c "lua require('nvim-treesitter.install').prefer_git = false" \
+            -c "TSInstallSync go lua" \
+            -c "qa"
 
       - name: Run tests
-        shell: bash
-        run: |
-          make test
+        run: make test

@@ -1,13 +1,22 @@
 -- Minimal init for plenary.nvim tests.
--- Adds the plugin and plenary to the runtime path.
+-- Finds plugins in /tmp/nvim-plugins/ (CI) or ~/.local/share/nvim/lazy/ (local).
 
 local plugin_root = vim.fn.fnamemodify(debug.getinfo(1, "S").source:sub(2), ":h:h")
 vim.opt.runtimepath:prepend(plugin_root)
 
--- Add plenary.nvim (lazy.nvim default location)
-local plenary_path = vim.fn.expand("~/.local/share/nvim/lazy/plenary.nvim")
-vim.opt.runtimepath:prepend(plenary_path)
+local function find_plugin(name)
+  local candidates = {
+    "/tmp/nvim-plugins/" .. name,
+    vim.fn.expand("~/.local/share/nvim/lazy/" .. name),
+  }
+  for _, path in ipairs(candidates) do
+    if vim.fn.isdirectory(path) == 1 then
+      return path
+    end
+  end
+  error("Plugin not found: " .. name .. " (checked: " .. table.concat(candidates, ", ") .. ")")
+end
 
--- Add nvim-treesitter for parser grammars (Go, Lua, etc.)
-local ts_path = vim.fn.expand("~/.local/share/nvim/lazy/nvim-treesitter")
-vim.opt.runtimepath:prepend(ts_path)
+vim.opt.runtimepath:prepend(find_plugin("plenary.nvim"))
+vim.opt.runtimepath:prepend(find_plugin("nvim-treesitter"))
+vim.opt.runtimepath:prepend(find_plugin("snacks.nvim"))
