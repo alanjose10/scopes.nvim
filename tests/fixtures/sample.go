@@ -15,13 +15,6 @@ var DefaultName = "world"
 type MyStruct struct {
 	Name  string
 	Count int
-	Test  string
-	Yo    Yolo
-}
-
-type Yolo struct {
-	First string
-	Last  string
 }
 
 func converStrToInt(a string) (int, error) {
