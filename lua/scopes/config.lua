@@ -39,8 +39,8 @@ local M = {}
 M.defaults = {
   backend = "auto",
   keymaps = {
-    open = "<leader>ss",
-    open_root = "<leader>sS",
+    open = "<leader>so",
+    open_root = "<leader>sO",
   },
   picker = {
     enter = "<CR>",
