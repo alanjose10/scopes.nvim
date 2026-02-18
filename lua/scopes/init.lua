@@ -1,4 +1,5 @@
 local config = require("scopes.config")
+local log = require("scopes.log")
 
 local M = {}
 
@@ -21,6 +22,30 @@ function M.setup(opts)
       M.open({ root = true })
     end, { desc = "Scope: open at file root" })
   end
+
+  -- Invalidate cached tree when a buffer is edited or written.
+  local tree = require("scopes.tree")
+  vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI", "BufWritePost" }, {
+    group = vim.api.nvim_create_augroup("scopes_cache_invalidate", { clear = true }),
+    callback = function(ev)
+      if vim.bo[ev.buf].buftype ~= "" then
+        return
+      end
+      log.debug("cache invalidated buf=" .. ev.buf .. " event=" .. ev.event)
+      tree.invalidate(ev.buf)
+    end,
+  })
+  -- Clean up cache entry when a buffer is removed from memory.
+  vim.api.nvim_create_autocmd({ "BufUnload", "BufWipeout" }, {
+    group = vim.api.nvim_create_augroup("scopes_cache_cleanup", { clear = true }),
+    callback = function(ev)
+      if vim.bo[ev.buf].buftype ~= "" then
+        return
+      end
+      log.debug("cache cleaned up buf=" .. ev.buf .. " event=" .. ev.event)
+      tree.invalidate(ev.buf)
+    end,
+  })
 end
 
 --- Open the scope picker.

@@ -57,17 +57,17 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 - [x] Wire `<CR>` (Enter) action — call `Navigator:enter()`, close picker, jump cursor
 - [x] Wire `<Tab>` action — call `Navigator:drill_down()` on selected item, refresh picker items
 - [x] Wire `<S-Tab>` action — call `Navigator:go_up()`, refresh picker items
-- [ ] Wire `<Esc>` / `q` — close picker, restore cursor to original position
+- [x] Wire `<Esc>` / `q` — close picker, restore cursor to original position
 - [x] Display breadcrumb in picker title/header
 - [x] Fuzzy filtering via snacks.picker built-in text input (no custom work needed, just ensure source refreshes correctly)
-- [ ] Respect picker config: `width`, `height`, `border`
+- [x] Respect picker config: `width`, `height`, `border`
 
 ### 1.6 Integration & Commands
 
 - [x] Wire `lua/scopes/init.lua` `setup()` to register keymaps (`<leader>so` open at cursor, `<leader>sO` open at root)
 - [x] Implement `:ScopeOpen` command — open picker at cursor scope
 - [x] Implement `:ScopeBrowse` command — open picker at file root
-- [ ] Add autocommand to invalidate cached tree on `TextChanged` / `BufWritePost`
+- [x] Add autocommand to invalidate cached tree on `TextChanged` / `BufWritePost`
 
 ### 1.7 MVP Smoke Testing
 

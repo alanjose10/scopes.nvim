@@ -1,5 +1,6 @@
 --- @class scopes.Config
 --- @field backend "treesitter"|"lsp"|"auto"
+--- @field debug boolean
 --- @field keymaps scopes.KeymapConfig
 --- @field picker scopes.PickerConfig
 --- @field display scopes.DisplayConfig
@@ -38,6 +39,7 @@ local M = {}
 --- @type scopes.Config
 M.defaults = {
   backend = "auto",
+  debug = false,
   keymaps = {
     open = "<leader>so",
     open_root = "<leader>sO",
