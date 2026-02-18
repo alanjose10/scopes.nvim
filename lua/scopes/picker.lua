@@ -95,9 +95,22 @@ function M.open(nav, bufnr)
       end,
 
       scope_up = function(picker)
+        -- Focus on the node's parent when going up in scope
+        local prev_node = nav:current()
         if nav:go_up() then
           picker.title = nav:breadcrumb_string()
-          picker:refresh()
+          picker.list:set_selected()
+          picker:find({
+            refresh = true,
+            on_done = function()
+              for item, idx in picker:iter() do
+                if item.node == prev_node then
+                  picker.list:view(idx)
+                  return
+                end
+              end
+            end,
+          })
         end
       end,
     },
