@@ -2,6 +2,8 @@
 --- Maps Treesitter node types to scope/symbol categories.
 
 --- @type LangConfig
+-- TODO: Add then name getter fn as an item to this table.
+-- Maybe also move this structure to a common location and reuse it across all languages
 local M = {
   node_types = {
     -- Scoped types

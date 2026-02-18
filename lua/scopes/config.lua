@@ -56,10 +56,11 @@ M.defaults = {
     border = nil,
   },
   display = {
-    icons = true,
-    line_numbers = true,
-    breadcrumb = true,
+    icons = true, -- TODO: Not yet used
+    line_numbers = true, -- TODO: Not yet used
+    breadcrumb = true, -- TODO: Not yet used
   },
+  -- TODO: Not yet used
   treesitter = {
     scope_types = {},
   },
