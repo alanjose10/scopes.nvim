@@ -2,21 +2,25 @@
 
 Hierarchical, scope-based symbol navigation for Neovim.
 
-Browse a file's structure like a tree — drill into functions, classes, and blocks to see their contents, then navigate back up to the parent scope. Think of it as a keyboard-driven alternative to sidebar outlines like Aerial, but scoped to where you are in the file.
+Ever get lost scrolling through a large function, trying to remember what variables were set up at the top? scopes.nvim lets you open a picker scoped to exactly where your cursor is — see only the symbols inside your current function, class, or block, glance at what you need, then close it and land back exactly where you were.
 
-> **Status:** Early development (Phase 1 MVP in progress)
+Its hierarchical design allows you to drill into a nested block with `Tab`, go back up with `Shift-Tab`, or jump straight to any symbol with `Enter`. Think of it as a keyboard-driven alternative to sidebar outlines like Aerial, but scoped to where you are rather than showing the whole file at once.
 
-## Why?
+<!-- TODO: add demo GIF -->
 
-Existing symbol navigation in Neovim is either flat (Telescope/snacks symbol pickers dump everything at once) or spatial (Aerial shows a permanent sidebar). Neither maps well to how you actually think about code — as nested scopes you move in and out of.
+## When is this useful?
 
-scopes.nvim lets you:
+Consider this scenario, you're deep inside a large test function. There's a bunch of fixture setup and helper variables near the top, but you don't remember the exact name of one of them. You could scroll up, lose your place, then scroll back down — or you could hit `<leader>so`, see a filtered list of everything inside that function, grab the name you need, press `q`, and be right back where you were.
 
-- Open a picker showing symbols **in your current scope**
-- **Drill into** a function/class/block with `Tab` to see what's inside
-- **Go back up** with `Shift-Tab`
-- **Jump** to any symbol with `Enter`
-- **Filter** with fuzzy search at any level
+Or maybe you're in a big struct method and want to quickly check what other methods are on it. Open the picker from the struct level, not the function — drill up first, browse, then jump.
+
+The key idea: it's not just symbol jumping. It's **orienting yourself inside a scope** without losing your place.
+
+## Why not just use Telescope or snacks symbols?
+
+Flat symbol pickers dump every symbol in the file at once — useful for jumping across the file, less useful when you want to understand what's happening *inside* a particular function or block. Sidebar outlines (Aerial, etc.) always show the whole file, which is great for overview but noisy when you're focused on one area.
+
+scopes.nvim gives you the same fuzzy filtering and jumping you already know, just scoped to where you actually are.
 
 ## Requirements
 
@@ -43,20 +47,14 @@ require("scopes").setup({
   -- All options are optional. These are the defaults:
   backend = "auto",              -- "treesitter" | "lsp" | "auto"
   keymaps = {
-    open = "<leader>ss",         -- Open picker at cursor scope
-    open_root = "<leader>sS",    -- Open picker at file root
+    open = "<leader>so",         -- Open picker at cursor scope
+    open_root = "<leader>sO",    -- Open picker at file root
   },
   picker = {
     backend = "snacks",          -- "snacks" | "telescope" (telescope is planned)
-    preview = true,
     width = 0.5,
     height = 0.4,
     border = "rounded",
-  },
-  display = {
-    icons = true,
-    line_numbers = true,
-    breadcrumb = true,
   },
 })
 ```
@@ -93,12 +91,12 @@ Adding a new language is a single file with Treesitter node type mappings. See `
 
 ## How It Works
 
-scopes.nvim builds a tree from your file's Treesitter parse tree (with LSP as a planned fallback), then lets you navigate that tree through a picker. The architecture has four layers:
+scopes.nvim builds a tree from your file's Treesitter parse tree, then lets you navigate that tree through a picker. Four layers, each independently testable:
 
-1. **Language configs** — declarative mappings from Treesitter node types to scope/symbol categories
-2. **Tree builder** — converts Treesitter nodes into a unified `ScopeTree`
-3. **Navigator** — UI-agnostic state machine for drill-down/go-up/jump
-4. **Picker integration** — thin adapter wiring the Navigator to snacks.picker
+1. **Language configs** — one file per language, just a table of node types and a name extractor. No logic.
+2. **Tree builder** — walks the Treesitter parse tree and produces a unified `ScopeTree`. Stateless.
+3. **Navigator** — state machine that tracks your current scope, breadcrumb path, and cursor position. Knows nothing about pickers.
+4. **Picker integration** — thin adapter that wires the Navigator to snacks.picker. Swap this layer for Telescope support without touching anything else.
 
 ## License
 
