@@ -17,9 +17,9 @@
 --- @field close string[]
 --- @field backend "snacks"|"telescope"
 --- @field preview boolean
---- @field width number
---- @field height number
---- @field border string
+--- @field width? number
+--- @field height? number
+--- @field border? string
 
 --- @class scopes.DisplayConfig
 --- @field icons boolean
@@ -49,9 +49,9 @@ M.defaults = {
     close = { "<Esc>", "q" },
     backend = "snacks",
     preview = true,
-    width = 0.5,
-    height = 0.4,
-    border = "rounded",
+    width = nil,
+    height = nil,
+    border = nil,
   },
   display = {
     icons = true,

@@ -1,5 +1,7 @@
 local M = {}
 
+local config = require("scopes.config")
+
 local ICONS = {
   ["function"] = "󰊕",
   ["method"] = "󰊕",
@@ -61,9 +63,18 @@ function M.open(nav, bufnr)
   local buf_name = vim.api.nvim_buf_get_name(bufnr)
   local main_win = vim.api.nvim_get_current_win()
   local original_cursor = vim.api.nvim_win_get_cursor(main_win)
+  local cfg = config.get()
 
   Snacks.picker({
     title = nav:breadcrumb_string(),
+
+    layout = {
+      layout = {
+        width = cfg.picker.width,
+        height = cfg.picker.height,
+        border = cfg.picker.border,
+      },
+    },
 
     finder = function()
       local items = {}
