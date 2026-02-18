@@ -63,6 +63,7 @@ function M.open(nav, bufnr)
   local buf_name = vim.api.nvim_buf_get_name(bufnr)
   local main_win = vim.api.nvim_get_current_win()
   local original_cursor = vim.api.nvim_win_get_cursor(main_win)
+  local confirmed = false
   local cfg = config.get()
 
   Snacks.picker({
@@ -90,10 +91,17 @@ function M.open(nav, bufnr)
       if not item then
         return
       end
+      confirmed = true
       local pos = nav:enter(item.node)
       picker:close()
       if vim.api.nvim_win_is_valid(main_win) then
         vim.api.nvim_win_set_cursor(main_win, { pos.row + 1, pos.col })
+      end
+    end,
+
+    on_close = function(_picker)
+      if not confirmed and vim.api.nvim_win_is_valid(main_win) then
+        vim.api.nvim_win_set_cursor(main_win, original_cursor)
       end
     end,
 
@@ -103,13 +111,6 @@ function M.open(nav, bufnr)
         if item and nav:drill_down(item.node) then
           picker.title = nav:breadcrumb_string()
           picker:refresh()
-        end
-      end,
-
-      cancel = function(picker)
-        picker:close()
-        if vim.api.nvim_win_is_valid(main_win) then
-          vim.api.nvim_win_set_cursor(main_win, original_cursor)
         end
       end,
 
@@ -138,7 +139,6 @@ function M.open(nav, bufnr)
         keys = {
           ["<Tab>"] = { "scope_drill", mode = { "i", "n" } },
           ["<S-Tab>"] = { "scope_up", mode = { "i", "n" } },
-          ["<Esc>"] = { "cancel", mode = { "n" } },
         },
       },
     },

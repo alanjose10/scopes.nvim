@@ -229,7 +229,7 @@ local function build(bufnr, opts)
 end
 
 -- Invalidate cache on text changes and buffer entry.
-vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI", "BufEnter" }, {
+vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI", "BufEnter", "BufWritePost" }, {
   group = vim.api.nvim_create_augroup("scopes_cache_invalidate", { clear = true }),
   callback = function(ev)
     invalidate(ev.buf)
