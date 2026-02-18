@@ -99,7 +99,6 @@ function M.open(nav, bufnr)
         local prev_node = nav:current()
         if nav:go_up() then
           picker.title = nav:breadcrumb_string()
-          picker.list:set_selected()
           picker:find({
             refresh = true,
             on_done = function()
