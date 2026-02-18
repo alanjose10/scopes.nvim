@@ -6,7 +6,7 @@ Ever get lost scrolling through a large function, trying to remember what variab
 
 Its hierarchical design allows you to drill into a nested block with `Tab`, go back up with `Shift-Tab`, or jump straight to any symbol with `Enter`. Think of it as a keyboard-driven alternative to sidebar outlines like Aerial, but scoped to where you are rather than showing the whole file at once.
 
-<!-- TODO: add demo GIF -->
+![scopes.nvim screenshot](screenshots/screenshot.png)
 
 ## When is this useful?
 
