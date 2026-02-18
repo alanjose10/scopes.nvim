@@ -64,9 +64,9 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 1.6 Integration & Commands
 
-- [ ] Wire `lua/scopes/init.lua` `setup()` to register keymaps (`<leader>ss` open at cursor, `<leader>sS` open at root)
-- [ ] Implement `:ScopeOpen` command — open picker at cursor scope
-- [ ] Implement `:ScopeBrowse` command — open picker at file root
+- [x] Wire `lua/scopes/init.lua` `setup()` to register keymaps (`<leader>so` open at cursor, `<leader>sO` open at root)
+- [x] Implement `:ScopeOpen` command — open picker at cursor scope
+- [x] Implement `:ScopeBrowse` command — open picker at file root
 - [ ] Add autocommand to invalidate cached tree on `TextChanged` / `BufWritePost`
 
 ### 1.7 MVP Smoke Testing
