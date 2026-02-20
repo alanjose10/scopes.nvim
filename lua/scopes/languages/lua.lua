@@ -4,74 +4,80 @@
 --- @type LangConfig
 local M = {
   node_types = {
-    function_declaration = { kind = "function", is_scope = true },
-    function_definition = { kind = "function", is_scope = true },
-    if_statement = { kind = "block", is_scope = true },
-    for_statement = { kind = "block", is_scope = true },
-    while_statement = { kind = "block", is_scope = true },
-    do_statement = { kind = "block", is_scope = true },
-    assignment_statement = { kind = "variable", is_scope = false },
-    variable_declaration = { kind = "variable", is_scope = false },
-  },
-
-  --- Extract a human-readable name from a Treesitter node.
-  --- @param node TSNode
-  --- @param source number buffer number
-  --- @return string
-  get_name = function(node, source)
-    local node_type = node:type()
-
-    if node_type == "function_declaration" then
-      local name_node = node:field("name")[1]
-      if name_node then
-        return vim.treesitter.get_node_text(name_node, source)
-      end
-    end
-
-    if node_type == "function_definition" then
-      return "[anonymous]"
-    end
-
-    if node_type == "assignment_statement" or node_type == "variable_declaration" then
-      -- For variable_declaration, drill into its inner assignment_statement
-      local assign = node
-      if node_type == "variable_declaration" then
+    function_declaration = {
+      kind = "function",
+      is_scope = true,
+      name_getter = function(node, source)
+        local name_node = node:field("name")[1]
+        if name_node then
+          return vim.treesitter.get_node_text(name_node, source)
+        end
+      end,
+    },
+    function_definition = {
+      kind = "function",
+      is_scope = true,
+      name_getter = function(_node, _source)
+        return "[anonymous]"
+      end,
+    },
+    if_statement = {
+      kind = "block",
+      is_scope = true,
+      name_getter = function(_node, _source)
+        return "if"
+      end,
+    },
+    for_statement = {
+      kind = "block",
+      is_scope = true,
+      name_getter = function(_node, _source)
+        return "for"
+      end,
+    },
+    while_statement = {
+      kind = "block",
+      is_scope = true,
+      name_getter = function(_node, _source)
+        return "while"
+      end,
+    },
+    do_statement = {
+      kind = "block",
+      is_scope = true,
+      name_getter = function(_node, _source)
+        return "do"
+      end,
+    },
+    assignment_statement = {
+      kind = "variable",
+      is_scope = false,
+      name_getter = function(node, source)
+        -- assignment_statement has a variable_list child; return its full text
         for child in node:iter_children() do
-          if child:type() == "assignment_statement" then
-            assign = child
-            break
+          if child:type() == "variable_list" then
+            return vim.treesitter.get_node_text(child, source)
           end
         end
-        if assign == node then
-          return node_type
+      end,
+    },
+    variable_declaration = {
+      kind = "variable",
+      is_scope = false,
+      name_getter = function(node, source)
+        -- variable_declaration wraps an inner assignment_statement
+        for child in node:iter_children() do
+          if child:type() == "assignment_statement" then
+            for grandchild in child:iter_children() do
+              if grandchild:type() == "variable_list" then
+                return vim.treesitter.get_node_text(grandchild, source)
+              end
+            end
+          end
         end
-      end
-      -- assignment_statement has a variable_list child; return its full text
-      for child in assign:iter_children() do
-        if child:type() == "variable_list" then
-          return vim.treesitter.get_node_text(child, source)
-        end
-      end
-    end
-
-    if node_type == "if_statement" then
-      return "if"
-    end
-
-    if node_type == "for_statement" then
-      return "for"
-    end
-
-    if node_type == "while_statement" then
-      return "while"
-    end
-
-    if node_type == "do_statement" then
-      return "do"
-    end
-
-    return node_type
-  end,
+      end,
+    },
+  },
 }
 
 -- Derive scope_types, symbol_types, kind_map from node_types
@@ -85,6 +91,19 @@ for node_type, info in pairs(M.node_types) do
   else
     table.insert(M.symbol_types, node_type)
   end
+end
+
+--- Extract a human-readable name from a Treesitter node.
+--- @param node TSNode
+--- @param source number buffer number
+--- @return string
+M.get_name = function(node, source)
+  local node_type = node:type()
+  local info = M.node_types[node_type]
+  if info and info.name_getter then
+    return info.name_getter(node, source)
+  end
+  return node_type
 end
 
 return M
