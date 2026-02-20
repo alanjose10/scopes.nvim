@@ -1,4 +1,5 @@
-local lua_lang = require("scopes.languages.lua")
+local lang_config = require("scopes.lang_config")
+local lua_lang = lang_config.build(require("scopes.languages.lua"))
 
 describe("languages.lua", function()
   describe("scope_types", function()

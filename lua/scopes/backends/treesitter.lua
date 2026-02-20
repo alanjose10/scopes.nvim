@@ -5,6 +5,7 @@
 local tree_mod = require("scopes.tree")
 local ScopeNode = tree_mod.ScopeNode
 local ScopeTree = tree_mod.ScopeTree
+local lang_config_mod = require("scopes.lang_config")
 
 local M = {}
 
@@ -77,9 +78,8 @@ end
 
 --- Build a ScopeTree from a buffer's Treesitter parse tree.
 --- @param bufnr number
---- @param lang_config? LangConfig Optional language config override. If nil, auto-detected from parser language.
 --- @return ScopeTree|nil
-function M.build(bufnr, lang_config)
+function M.build(bufnr)
   local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
   if not ok or not parser then
     vim.notify("scopes.nvim: no treesitter parser for buffer " .. bufnr, vim.log.levels.WARN)
@@ -88,14 +88,10 @@ function M.build(bufnr, lang_config)
 
   local lang = parser:lang()
 
+  local lang_config = lang_config_mod.load(lang)
   if not lang_config then
-    local config_ok, config = pcall(require, "scopes.languages." .. lang)
-    if not config_ok then
-      vim.notify("scopes.nvim: no language config for '" .. lang .. "'", vim.log.levels.WARN)
-      -- TODO: implement generic fallback heuristics for unsupported languages
-      return nil
-    end
-    lang_config = config
+    -- TODO: implement generic fallback heuristics for unsupported languages
+    return nil
   end
 
   local parse_ok, trees = pcall(parser.parse, parser)

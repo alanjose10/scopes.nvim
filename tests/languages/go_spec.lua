@@ -1,4 +1,5 @@
-local go = require("scopes.languages.go")
+local lang_config = require("scopes.lang_config")
+local go = lang_config.build(require("scopes.languages.go"))
 
 describe("languages.go", function()
   describe("scope_types", function()

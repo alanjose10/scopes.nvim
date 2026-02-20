@@ -13,15 +13,16 @@ lua/scopes/config.lua        -- defaults, merge, validation
 lua/scopes/tree.lua          -- ScopeTree / ScopeNode builder (facade)
 lua/scopes/navigator.lua     -- navigation state machine
 lua/scopes/picker.lua        -- snacks.picker source + telescope extension
-lua/scopse/backends/
+lua/scopes/lang_config.lua   -- build(node_types) → LangConfig; load(lang) → LangConfig|nil
+lua/scopes/backends/
   treesitter.lua             -- TS-specific tree building
   lsp.lua                   -- LSP DocumentSymbol adapter
 lua/scopes/languages/
-  go.lua                    -- Go scope/symbol node types
-  lua.lua                   -- Lua scope/symbol node types
-  typescript.lua            -- TS scope/symbol node types
-  python.lua                -- Python scope/symbol node types
-plugin/scospe.lua            -- :ScopeOpen, :ScopeBrowse user commands
+  go.lua                    -- Go node_types table (pure data, no logic)
+  lua.lua                   -- Lua node_types table (pure data, no logic)
+  typescript.lua            -- TS node_types table (pure data, no logic)
+  python.lua                -- Python node_types table (pure data, no logic)
+plugin/scopes.lua            -- :ScopeOpen, :ScopeBrowse user commands
 tests/                      -- plenary.nvim tests
 tests/fixtures/             -- sample source files for testing
 ```
@@ -45,10 +46,10 @@ tests/fixtures/             -- sample source files for testing
 --- @field lang string            -- Language identifier
 
 --- @class LangConfig
---- @field node_types table<string, {kind: string, is_scope: boolean}>  -- Source of truth for node type mappings
---- @field scope_types string[]   -- (derived from node_types) Treesitter node types that create scopes
---- @field symbol_types string[]  -- (derived from node_types) Treesitter node types that appear as items
---- @field kind_map table<string, string>  -- (derived from node_types) Maps node type to kind string
+--- @field node_types table<string, {kind: string, is_scope: boolean, name_getter: fun(node: TSNode, source: number): string|nil}>  -- Source of truth
+--- @field scope_types string[]   -- (derived) Treesitter node types that create scopes
+--- @field symbol_types string[]  -- (derived) Treesitter node types that appear as items
+--- @field kind_map table<string, string>  -- (derived) Maps node type to kind string
 --- @field get_name fun(node: TSNode, source: number): string  -- Extract display name from a TS node
 ```
 
@@ -56,10 +57,11 @@ tests/fixtures/             -- sample source files for testing
 
 Four layers, each independently testable:
 
-1. **Language configs** (`languages/*.lua`) — declarative mappings from Treesitter node types to scope/symbol categories. Pure data, no logic.
-2. **Tree builder** (`tree.lua` + `backends/`) — consumes TS nodes or LSP DocumentSymbols, produces a `ScopeTree`. Stateless.
-3. **Navigator** (`navigator.lua`) — state machine over a `ScopeTree`. Tracks current node, breadcrumb path, cursor index. Exposes `drill_down()`, `go_up()`, `enter()`, `children()`, `open_at_cursor()`. No UI dependency.
-4. **Picker integration** (`picker.lua`) — thin adapter between Navigator and snacks.picker. Provides items, maps keybindings to Navigator methods, handles refresh on drill/up.
+1. **Language configs** (`languages/*.lua`) — pure data files; each returns a raw `node_types` table only. No derivation logic.
+2. **LangConfig builder** (`lang_config.lua`) — `build(node_types)` derives `scope_types`, `symbol_types`, `kind_map`, and `get_name` from a raw node_types table. `load(lang)` requires the language file and calls `build()`. All boilerplate lives here.
+3. **Tree builder** (`tree.lua` + `backends/`) — consumes TS nodes or LSP DocumentSymbols, produces a `ScopeTree`. Stateless.
+4. **Navigator** (`navigator.lua`) — state machine over a `ScopeTree`. Tracks current node, breadcrumb path, cursor index. Exposes `drill_down()`, `go_up()`, `enter()`, `children()`, `open_at_cursor()`. No UI dependency.
+5. **Picker integration** (`picker.lua`) — thin adapter between Navigator and snacks.picker. Provides items, maps keybindings to Navigator methods, handles refresh on drill/up.
 
 ## Testing
 
@@ -85,11 +87,13 @@ nvim --headless -c "PlenaryBustedDirectory tests/config_spec.lua {minimal_init =
 One spec file per module, mirroring the source layout:
 
 ```
-lua/scope/tree.lua         → tests/tree_spec.lua
-lua/scope/navigator.lua    → tests/navigator_spec.lua
-lua/scope/config.lua       → tests/config_spec.lua
-lua/scope/picker.lua       → tests/picker_spec.lua
-lua/scope/languages/go.lua → tests/languages/go_spec.lua
+lua/scopes/tree.lua          → tests/tree_spec.lua
+lua/scopes/navigator.lua     → tests/navigator_spec.lua
+lua/scopes/config.lua        → tests/config_spec.lua
+lua/scopes/picker.lua        → tests/picker_spec.lua
+lua/scopes/lang_config.lua   → tests/lang_config_spec.lua
+lua/scopes/languages/go.lua  → tests/languages/go_spec.lua
+lua/scopes/languages/lua.lua → tests/languages/lua_spec.lua
 ```
 
 ### Test Conventions
@@ -162,7 +166,15 @@ For each module, cover these categories:
 - Invalid values are rejected or warned about (e.g., `backend = "invalid"`)
 - Keymaps are overridable
 
+**lang_config.lua**
+- `build()` derives correct `scope_types`, `symbol_types`, `kind_map`, and `get_name` from a mock node_types table
+- `get_name` calls the matching `name_getter`; falls back to node type string when absent
+- `build({})` returns a valid empty config
+- `load("go")` / `load("lua")` return a fully-built LangConfig
+- `load("unknown")` returns nil (with a WARN notification)
+
 **languages/*.lua**
+- Each language file is loaded through `lang_config.build(require("scopes.languages.X"))` in tests
 - `scope_types` list contains only valid Treesitter node type strings for that language
 - `symbol_types` list contains only valid Treesitter node type strings
 - `get_name()` returns expected names from sample TS nodes
@@ -210,7 +222,7 @@ For each module, cover these categories:
 - **Treesitter first, LSP fallback.** Treesitter is fast, works offline, and gives direct access to the syntax tree. LSP is Phase 2.
 - **snacks.picker, not a custom UI.** We get fuzzy filtering, the text input prompt, preview, and window management for free. Our code only provides items and custom actions.
 - **Navigator is UI-agnostic.** The Navigator knows nothing about pickers. This means Telescope support (Phase 2) is just a new adapter, not a rewrite.
-- **Language configs are declarative.** Adding a new language should be a single file with two lists of node types and a name extractor function.
+- **Language configs are declarative.** Adding a new language is a single file that returns a raw `node_types` table (kind, is_scope, name_getter per entry). All derivation is handled by `lang_config.build()` — no boilerplate in the language file itself.
 
 ## Critical Assumption
 

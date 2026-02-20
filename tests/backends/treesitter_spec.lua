@@ -150,7 +150,8 @@ describe("backends.treesitter", function()
     end)
 
     it("kind values match kind_map", function()
-      local go_lang = require("scopes.languages.go")
+      local lang_config = require("scopes.lang_config")
+      local go_lang = lang_config.build(require("scopes.languages.go"))
       local valid_kinds = { module = true }
       for _, kind in pairs(go_lang.kind_map) do
         valid_kinds[kind] = true
@@ -295,21 +296,5 @@ describe("backends.treesitter", function()
       vim.api.nvim_buf_delete(bufnr, { force = true })
     end)
 
-    it("accepts an explicit lang_config parameter", function()
-      local bufnr = vim.api.nvim_create_buf(false, true)
-      local lines = vim.fn.readfile("tests/fixtures/sample.go")
-      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-      vim.api.nvim_set_option_value("filetype", "go", { buf = bufnr })
-      vim.treesitter.start(bufnr, "go")
-      vim.treesitter.get_parser(bufnr, "go"):parse()
-
-      local go_lang = require("scopes.languages.go")
-      local result = ts_backend.build(bufnr, go_lang)
-      assert.is_truthy(result)
-      assert.are.equal("treesitter", result.source)
-      assert.is_true(#result.root.children > 0)
-
-      vim.api.nvim_buf_delete(bufnr, { force = true })
-    end)
   end)
 end)
