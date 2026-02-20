@@ -1,46 +1,5 @@
 local ts_backend = require("scopes.backends.treesitter")
-
---- Helper: find all ScopeNodes with a given name in the tree.
-local function find_by_name(node, name)
-  local found = {}
-  if node.name == name then
-    table.insert(found, node)
-  end
-  for _, child in ipairs(node.children) do
-    for _, match in ipairs(find_by_name(child, name)) do
-      table.insert(found, match)
-    end
-  end
-  return found
-end
-
---- Helper: collect all names of direct children.
-local function child_names(node)
-  local names = {}
-  for _, child in ipairs(node.children) do
-    table.insert(names, child.name)
-  end
-  return names
-end
-
---- Helper: verify parent back-references recursively.
-local function check_parents(node, expected_parent)
-  assert.are.equal(expected_parent, node.parent, "parent mismatch for node '" .. node.name .. "'")
-  for _, child in ipairs(node.children) do
-    check_parents(child, node)
-  end
-end
-
---- Helper: verify all ranges are valid (start <= end).
-local function check_ranges(node)
-  local r = node.range
-  assert.is_truthy(r, "node '" .. node.name .. "' has no range")
-  local start_before_end = r.start_row < r.end_row or (r.start_row == r.end_row and r.start_col <= r.end_col)
-  assert.is_true(start_before_end, "invalid range for node '" .. node.name .. "'")
-  for _, child in ipairs(node.children) do
-    check_ranges(child)
-  end
-end
+local helpers = require("tests.helpers")
 
 describe("backends.treesitter", function()
   describe("build() with Go fixture", function()
@@ -48,19 +7,12 @@ describe("backends.treesitter", function()
     local bufnr
 
     before_each(function()
-      bufnr = vim.api.nvim_create_buf(false, true)
-      local lines = vim.fn.readfile("tests/fixtures/sample.go")
-      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-      vim.api.nvim_set_option_value("filetype", "go", { buf = bufnr })
-      vim.treesitter.start(bufnr, "go")
-      vim.treesitter.get_parser(bufnr, "go"):parse()
+      bufnr = helpers.make_buf("tests/fixtures/sample.go", "go")
       scope_tree = ts_backend.build(bufnr)
     end)
 
     after_each(function()
-      if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
-        vim.api.nvim_buf_delete(bufnr, { force = true })
-      end
+      helpers.delete_buf(bufnr)
     end)
 
     it("returns a ScopeTree with source set to treesitter", function()
@@ -85,7 +37,7 @@ describe("backends.treesitter", function()
     end)
 
     it("function nodes have correct names", function()
-      local names = child_names(scope_tree.root)
+      local names = helpers.child_names(scope_tree.root)
       assert.is_true(vim.tbl_contains(names, "converStrToInt"))
       assert.is_true(vim.tbl_contains(names, "NewMyStruct"))
       assert.is_true(vim.tbl_contains(names, "HandleRequest"))
@@ -95,13 +47,13 @@ describe("backends.treesitter", function()
     end)
 
     it("HandleRequest is a method", function()
-      local nodes = find_by_name(scope_tree.root, "HandleRequest")
+      local nodes = helpers.find_by_name(scope_tree.root, "HandleRequest")
       assert.are.equal(1, #nodes)
       assert.are.equal("method", nodes[1].kind)
     end)
 
     it("HandleRequest has children (if + for blocks)", function()
-      local nodes = find_by_name(scope_tree.root, "HandleRequest")
+      local nodes = helpers.find_by_name(scope_tree.root, "HandleRequest")
       assert.is_true(#nodes[1].children > 0)
       local kinds = {}
       for _, child in ipairs(nodes[1].children) do
@@ -111,28 +63,28 @@ describe("backends.treesitter", function()
     end)
 
     it("has nested scopes: if inside for inside HandleRequest", function()
-      local handle = find_by_name(scope_tree.root, "HandleRequest")[1]
+      local handle = helpers.find_by_name(scope_tree.root, "HandleRequest")[1]
       -- Find the for loop inside HandleRequest
-      local for_nodes = find_by_name(handle, "for")
+      local for_nodes = helpers.find_by_name(handle, "for")
       assert.is_true(#for_nodes > 0, "expected a for loop inside HandleRequest")
       -- Find if statements inside the for loop
-      local if_nodes = find_by_name(for_nodes[1], "if")
+      local if_nodes = helpers.find_by_name(for_nodes[1], "if")
       assert.is_true(#if_nodes > 0, "expected if statements inside for loop")
     end)
 
     it("type_declaration for MyStruct contains field_declaration children", function()
-      local my_struct = find_by_name(scope_tree.root, "MyStruct")[1]
+      local my_struct = helpers.find_by_name(scope_tree.root, "MyStruct")[1]
       assert.is_truthy(my_struct, "expected MyStruct node")
       assert.are.equal("type", my_struct.kind)
-      local field_names = child_names(my_struct)
+      local field_names = helpers.child_names(my_struct)
       assert.is_true(vim.tbl_contains(field_names, "Name"))
       assert.is_true(vim.tbl_contains(field_names, "Count"))
     end)
 
     -- it("func_literal inside RunWithCallback exists with name [anonymous]", function()
-    --   local run = find_by_name(scope_tree.root, "RunWithCallback")[1]
+    --   local run = helpers.find_by_name(scope_tree.root, "RunWithCallback")[1]
     --   assert.is_truthy(run)
-    --   local anon = find_by_name(run, "[anonymous]")
+    --   local anon = helpers.find_by_name(run, "[anonymous]")
     --   assert.is_true(#anon > 0, "expected anonymous function inside RunWithCallback")
     --   assert.are.equal("function", anon[1].kind)
     -- end)
@@ -141,12 +93,12 @@ describe("backends.treesitter", function()
       -- Root's parent should be nil
       assert.is_nil(scope_tree.root.parent)
       for _, child in ipairs(scope_tree.root.children) do
-        check_parents(child, scope_tree.root)
+        helpers.check_parents(child, scope_tree.root)
       end
     end)
 
     it("all nodes have valid ranges", function()
-      check_ranges(scope_tree.root)
+      helpers.check_ranges(scope_tree.root)
     end)
 
     it("kind values match kind_map", function()
@@ -169,22 +121,22 @@ describe("backends.treesitter", function()
     end)
 
     it("import_declaration contains import_spec children", function()
-      local imports = find_by_name(scope_tree.root, "import")[1]
+      local imports = helpers.find_by_name(scope_tree.root, "import")[1]
       assert.is_truthy(imports, "expected import node")
       assert.are.equal("block", imports.kind)
-      local import_names = child_names(imports)
+      local import_names = helpers.child_names(imports)
       assert.is_true(vim.tbl_contains(import_names, "fmt"))
       assert.is_true(vim.tbl_contains(import_names, "strconv"))
     end)
 
     it("const MaxRetries is a const symbol", function()
-      local nodes = find_by_name(scope_tree.root, "MaxRetries")
+      local nodes = helpers.find_by_name(scope_tree.root, "MaxRetries")
       assert.are.equal(1, #nodes)
       assert.are.equal("const", nodes[1].kind)
     end)
 
     it("var DefaultName is a variable symbol", function()
-      local nodes = find_by_name(scope_tree.root, "DefaultName")
+      local nodes = helpers.find_by_name(scope_tree.root, "DefaultName")
       assert.are.equal(1, #nodes)
       assert.are.equal("variable", nodes[1].kind)
     end)
@@ -195,19 +147,12 @@ describe("backends.treesitter", function()
     local bufnr
 
     before_each(function()
-      bufnr = vim.api.nvim_create_buf(false, true)
-      local lines = vim.fn.readfile("tests/fixtures/sample.lua")
-      vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-      vim.api.nvim_set_option_value("filetype", "lua", { buf = bufnr })
-      vim.treesitter.start(bufnr, "lua")
-      vim.treesitter.get_parser(bufnr, "lua"):parse()
+      bufnr = helpers.make_buf("tests/fixtures/sample.lua", "lua")
       scope_tree = ts_backend.build(bufnr)
     end)
 
     after_each(function()
-      if bufnr and vim.api.nvim_buf_is_valid(bufnr) then
-        vim.api.nvim_buf_delete(bufnr, { force = true })
-      end
+      helpers.delete_buf(bufnr)
     end)
 
     it("returns a ScopeTree with source set to treesitter", function()
@@ -224,7 +169,7 @@ describe("backends.treesitter", function()
     end)
 
     it("finds expected function declarations", function()
-      local names = child_names(scope_tree.root)
+      local names = helpers.child_names(scope_tree.root)
       assert.is_true(vim.tbl_contains(names, "M.new"))
       assert.is_true(vim.tbl_contains(names, "M.process"))
       assert.is_true(vim.tbl_contains(names, "M._transform"))
@@ -235,37 +180,37 @@ describe("backends.treesitter", function()
     end)
 
     it("M.process has nested children (if, for)", function()
-      local process = find_by_name(scope_tree.root, "M.process")[1]
+      local process = helpers.find_by_name(scope_tree.root, "M.process")[1]
       assert.is_truthy(process)
       assert.is_true(#process.children > 0)
-      local has_if = #find_by_name(process, "if") > 0
-      local has_for = #find_by_name(process, "for") > 0
+      local has_if = #helpers.find_by_name(process, "if") > 0
+      local has_for = #helpers.find_by_name(process, "for") > 0
       assert.is_true(has_if, "expected if blocks inside M.process")
       assert.is_true(has_for, "expected for block inside M.process")
     end)
 
     it("setup_defaults is a function_declaration", function()
-      local nodes = find_by_name(scope_tree.root, "setup_defaults")
+      local nodes = helpers.find_by_name(scope_tree.root, "setup_defaults")
       assert.are.equal(1, #nodes)
       assert.are.equal("function", nodes[1].kind)
     end)
 
     it("anonymous function_definition inside M.init exists", function()
-      local init = find_by_name(scope_tree.root, "M.init")[1]
+      local init = helpers.find_by_name(scope_tree.root, "M.init")[1]
       assert.is_truthy(init)
-      local anon = find_by_name(init, "[anonymous]")
+      local anon = helpers.find_by_name(init, "[anonymous]")
       assert.is_true(#anon > 0, "expected anonymous function inside M.init")
     end)
 
     it("parent back-references are correct", function()
       assert.is_nil(scope_tree.root.parent)
       for _, child in ipairs(scope_tree.root.children) do
-        check_parents(child, scope_tree.root)
+        helpers.check_parents(child, scope_tree.root)
       end
     end)
 
     it("all nodes have valid ranges", function()
-      check_ranges(scope_tree.root)
+      helpers.check_ranges(scope_tree.root)
     end)
   end)
 

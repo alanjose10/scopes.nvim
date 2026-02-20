@@ -24,7 +24,7 @@ function M.build(node_types)
   config.get_name = function(node, source)
     local info = node_types[node:type()]
     if info and info.name_getter then
-      return info.name_getter(node, source)
+      return info.name_getter(node, source) or node:type()
     end
     return node:type()
   end

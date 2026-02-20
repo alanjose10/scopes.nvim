@@ -1,6 +1,7 @@
 local tree = require("scopes.tree")
 local ScopeNode = tree.ScopeNode
 local ScopeTree = tree.ScopeTree
+local helpers = require("tests.helpers")
 
 describe("ScopeNode", function()
   describe("new", function()
@@ -72,22 +73,14 @@ describe("ScopeNode", function()
   end)
 
   describe("validation", function()
-    local warnings
+    local warnings, restore_notify
 
     before_each(function()
-      warnings = {}
-      -- Stub vim.notify to capture warnings
-      _G._original_notify = vim.notify
-      vim.notify = function(msg, level)
-        if level == vim.log.levels.WARN then
-          table.insert(warnings, msg)
-        end
-      end
+      warnings, restore_notify = helpers.capture_notify()
     end)
 
     after_each(function()
-      vim.notify = _G._original_notify
-      _G._original_notify = nil
+      restore_notify()
     end)
 
     it("warns when name is missing", function()
@@ -220,21 +213,14 @@ describe("ScopeNode", function()
     end)
 
     describe("validation", function()
-      local warnings
+      local warnings, restore_notify, clear_warnings
 
       before_each(function()
-        warnings = {}
-        _G._original_notify_ac = vim.notify
-        vim.notify = function(msg, level)
-          if level == vim.log.levels.WARN then
-            table.insert(warnings, msg)
-          end
-        end
+        warnings, restore_notify, clear_warnings = helpers.capture_notify()
       end)
 
       after_each(function()
-        vim.notify = _G._original_notify_ac
-        _G._original_notify_ac = nil
+        restore_notify()
       end)
 
       it("does not warn when child is fully inside parent", function()
@@ -249,7 +235,7 @@ describe("ScopeNode", function()
           range = { start_row = 1, start_col = 0, end_row = 1, end_col = 5 },
         })
         -- Clear any warnings from construction
-        warnings = {}
+        clear_warnings()
         parent:add_child(child)
         assert.are.equal(0, #warnings)
       end)
@@ -265,7 +251,7 @@ describe("ScopeNode", function()
           kind = "variable",
           range = { start_row = 3, start_col = 0, end_row = 7, end_col = 0 },
         })
-        warnings = {}
+        clear_warnings()
         parent:add_child(child)
         assert.is_true(#warnings > 0)
         assert.is_truthy(warnings[1]:find("outside"))
@@ -282,7 +268,7 @@ describe("ScopeNode", function()
           kind = "variable",
           range = { start_row = 5, start_col = 0, end_row = 15, end_col = 0 },
         })
-        warnings = {}
+        clear_warnings()
         parent:add_child(child)
         assert.is_true(#warnings > 0)
         assert.is_truthy(warnings[1]:find("outside"))
@@ -299,7 +285,7 @@ describe("ScopeNode", function()
           kind = "variable",
           range = { start_row = 5, start_col = 5, end_row = 7, end_col = 0 },
         })
-        warnings = {}
+        clear_warnings()
         parent:add_child(child)
         assert.is_true(#warnings > 0)
         assert.is_truthy(warnings[1]:find("outside"))
@@ -316,7 +302,7 @@ describe("ScopeNode", function()
           kind = "variable",
           range = { start_row = 5, start_col = 0, end_row = 10, end_col = 10 },
         })
-        warnings = {}
+        clear_warnings()
         parent:add_child(child)
         assert.is_true(#warnings > 0)
         assert.is_truthy(warnings[1]:find("outside"))
@@ -333,7 +319,7 @@ describe("ScopeNode", function()
           kind = "variable",
           range = { start_row = 5, start_col = 5, end_row = 8, end_col = 20 },
         })
-        warnings = {}
+        clear_warnings()
         parent:add_child(child)
         -- start_col 5 >= 3, end_row 8 <= 10, no same-end-row check needed
         assert.are.equal(0, #warnings)
@@ -350,7 +336,7 @@ describe("ScopeNode", function()
           kind = "variable",
           range = { start_row = 1, start_col = 0, end_row = 1, end_col = 5 },
         })
-        warnings = {}
+        clear_warnings()
         parent:add_child(child)
         assert.is_true(#warnings > 0)
         assert.are.equal(1, #parent.children)
@@ -482,17 +468,12 @@ describe("build", function()
 
   before_each(function()
     config.merge({})
-    bufnr = vim.api.nvim_create_buf(false, true)
-    local lines = vim.fn.readfile("tests/fixtures/sample.go")
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-    vim.treesitter.start(bufnr, "go")
+    bufnr = helpers.make_buf("tests/fixtures/sample.go", "go")
     tree_mod.invalidate(bufnr)
   end)
 
   after_each(function()
-    if vim.api.nvim_buf_is_valid(bufnr) then
-      vim.api.nvim_buf_delete(bufnr, { force = true })
-    end
+    helpers.delete_buf(bufnr)
   end)
 
   it("returns a ScopeTree with source = treesitter for a parseable buffer", function()
@@ -502,30 +483,18 @@ describe("build", function()
   end)
 
   it("returns nil for a buffer with no parser", function()
-    local warnings = {}
-    local orig = vim.notify
-    vim.notify = function(msg, level)
-      if level == vim.log.levels.WARN then
-        table.insert(warnings, msg)
-      end
-    end
+    local warnings, restore = helpers.capture_notify()
     local empty_bufnr = vim.api.nvim_create_buf(false, true)
     local result = tree_mod.build(empty_bufnr)
-    vim.notify = orig
+    restore()
     assert.is_nil(result)
     vim.api.nvim_buf_delete(empty_bufnr, { force = true })
   end)
 
   it("returns nil and emits a WARN for backend = lsp", function()
-    local warnings = {}
-    local orig = vim.notify
-    vim.notify = function(msg, level)
-      if level == vim.log.levels.WARN then
-        table.insert(warnings, msg)
-      end
-    end
+    local warnings, restore = helpers.capture_notify()
     local result = tree_mod.build(bufnr, { backend = "lsp" })
-    vim.notify = orig
+    restore()
     assert.is_nil(result)
     assert.is_true(#warnings > 0)
     assert.is_truthy(warnings[1]:find("LSP"))
@@ -545,17 +514,12 @@ describe("cache", function()
 
   before_each(function()
     config.merge({ cache = { enabled = true, debounce_ms = 300 } })
-    bufnr = vim.api.nvim_create_buf(false, true)
-    local lines = vim.fn.readfile("tests/fixtures/sample.go")
-    vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
-    vim.treesitter.start(bufnr, "go")
+    bufnr = helpers.make_buf("tests/fixtures/sample.go", "go")
     tree_mod.invalidate(bufnr)
   end)
 
   after_each(function()
-    if vim.api.nvim_buf_is_valid(bufnr) then
-      vim.api.nvim_buf_delete(bufnr, { force = true })
-    end
+    helpers.delete_buf(bufnr)
   end)
 
   it("two consecutive build() calls return the same object (cache hit)", function()
@@ -595,21 +559,14 @@ describe("ScopeTree", function()
     end)
 
     describe("validation", function()
-      local warnings
+      local warnings, restore_notify, clear_warnings
 
       before_each(function()
-        warnings = {}
-        _G._original_notify_st = vim.notify
-        vim.notify = function(msg, level)
-          if level == vim.log.levels.WARN then
-            table.insert(warnings, msg)
-          end
-        end
+        warnings, restore_notify, clear_warnings = helpers.capture_notify()
       end)
 
       after_each(function()
-        vim.notify = _G._original_notify_st
-        _G._original_notify_st = nil
+        restore_notify()
       end)
 
       it("warns when root is missing", function()
@@ -624,7 +581,7 @@ describe("ScopeTree", function()
           kind = "module",
           range = { start_row = 0, start_col = 0, end_row = 10, end_col = 0 },
         })
-        warnings = {}
+        clear_warnings()
         ScopeTree.new({ root = root, source = "magic", bufnr = 1, lang = "go" })
         assert.is_true(#warnings > 0)
         assert.is_truthy(warnings[1]:find("source"))
@@ -636,7 +593,7 @@ describe("ScopeTree", function()
           kind = "module",
           range = { start_row = 0, start_col = 0, end_row = 10, end_col = 0 },
         })
-        warnings = {}
+        clear_warnings()
         ScopeTree.new({ root = root, source = "treesitter", lang = "go" })
         assert.is_true(#warnings > 0)
         assert.is_truthy(warnings[1]:find("bufnr"))
