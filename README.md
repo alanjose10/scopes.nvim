@@ -1,26 +1,29 @@
 # scopes.nvim
 
-Hierarchical, scope-based symbol navigation for Neovim.
-
-Ever get lost scrolling through a large function, trying to remember what variables were set up at the top? scopes.nvim lets you open a picker scoped to exactly where your cursor is — see only the symbols inside your current function, class, or block, glance at what you need, then close it and land back exactly where you were.
-
-Its hierarchical design allows you to drill into a nested block with `Tab`, go back up with `Shift-Tab`, or jump straight to any symbol with `Enter`. Think of it as a keyboard-driven alternative to sidebar outlines like Aerial, but scoped to where you are rather than showing the whole file at once.
+`scopes.nvim` is an attempt at having a hierarchical tree like, scope aware navigation for Neovim.
 
 ![scopes.nvim screenshot](screenshots/screenshot.png)
 
-## When is this useful?
+## Why use scopes.nvim?
 
-Consider this scenario, you're deep inside a large test function. There's a bunch of fixture setup and helper variables near the top, but you don't remember the exact name of one of them. You could scroll up, lose your place, then scroll back down — or you could hit `<leader>so`, see a filtered list of everything inside that function, grab the name you need, press `q`, and be right back where you were.
+When working with mainly large functions and files (mostly test files), I felt the need to browse the source code like a tree. Mainly,
 
-Or maybe you're in a big struct method and want to quickly check what other methods are on it. Open the picker from the struct level, not the function — drill up first, browse, then jump.
+- Launch a picker which shows all the elements in the current scope.
+- Ability to drill down an element to see the items inside its inner scope.
+- Ability to go the parent scope of an item to see other elements in the parent scope.
+- See a preview of the item on the side so that I can quickly peak at it without moving my cursor.
+
+scopes.nvim lets you open a picker scoped to exactly where your cursor is — see only the symbols inside your current function, class, or block, glance at what you need, then close it and land back exactly where you were.
+
+Its hierarchical design allows you to drill into a nested block with `Tab`, go back up with `Shift-Tab`, or jump straight to any symbol with `Enter`. Think of it as a keyboard-driven alternative to sidebar outlines like Aerial, but scoped to where you are rather than showing the whole file at once.
 
 The key idea: it's not just symbol jumping. It's **orienting yourself inside a scope** without losing your place.
 
-## Why not just use Telescope or snacks symbols?
+## Why not use the alternatives?
 
-Flat symbol pickers dump every symbol in the file at once — useful for jumping across the file, less useful when you want to understand what's happening *inside* a particular function or block. Sidebar outlines (Aerial, etc.) always show the whole file, which is great for overview but noisy when you're focused on one area.
+Snacks has a lsp symbols picker which shows the items in the file scope. But this does not allow you to drill down to an item. And it relies on the lsp, so there is a delay when using it in large files.
 
-scopes.nvim gives you the same fuzzy filtering and jumping you already know, just scoped to where you actually are.
+Aerial takes a different approach where it opens a side window similar to a file picker which was something I did not want to add to my vim setup.
 
 ## Requirements
 
