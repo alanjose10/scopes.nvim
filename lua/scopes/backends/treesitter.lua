@@ -42,39 +42,44 @@ local function walk(ts_node, parent_scope, lang_config, bufnr)
   local scope_set = to_set(lang_config.scope_types)
   local symbol_set = to_set(lang_config.symbol_types)
 
-  for child in ts_node:iter_children() do
-    local child_type = child:type()
-
-    -- TODO: Need to handle case where a node may or may not be scoped (like nested structs in go)
-    if child_type == "ERROR" then
-      local error_node = ScopeNode.new({
-        name = "[error]",
-        kind = "block",
-        range = get_range(child),
-        is_error = true,
-      })
-      parent_scope:add_child(error_node)
-      walk(child, error_node, lang_config, bufnr)
-    elseif scope_set[child_type] then
-      local scope_node = ScopeNode.new({
-        name = lang_config.get_name(child, bufnr),
-        kind = lang_config.kind_map and lang_config.kind_map[child_type] or child_type,
-        range = get_range(child),
-      })
-      parent_scope:add_child(scope_node)
-      walk(child, scope_node, lang_config, bufnr)
-    elseif symbol_set[child_type] then
-      local symbol_node = ScopeNode.new({
-        name = lang_config.get_name(child, bufnr),
-        kind = lang_config.kind_map and lang_config.kind_map[child_type] or child_type,
-        range = get_range(child),
-      })
-      parent_scope:add_child(symbol_node)
-    else
-      -- Transparent pass-through: recurse without creating a node
-      walk(child, parent_scope, lang_config, bufnr)
+  --- @param ts_node TSNode
+  --- @param parent_scope ScopeNode
+  local function r_walk(ts_node, parent_scope)
+    for child in ts_node:iter_children() do
+      local child_type = child:type()
+      -- TODO: Need to handle case where a node may or may not be scoped (like nested structs in go)
+      if child_type == "ERROR" then
+        local error_node = ScopeNode.new({
+          name = "[error]",
+          kind = "block",
+          range = get_range(child),
+          is_error = true,
+        })
+        parent_scope:add_child(error_node)
+        r_walk(child, error_node)
+      elseif scope_set[child_type] then
+        local scope_node = ScopeNode.new({
+          name = lang_config.get_name(child, bufnr),
+          kind = lang_config.kind_map and lang_config.kind_map[child_type] or child_type,
+          range = get_range(child),
+        })
+        parent_scope:add_child(scope_node)
+        r_walk(child, scope_node)
+      elseif symbol_set[child_type] then
+        local symbol_node = ScopeNode.new({
+          name = lang_config.get_name(child, bufnr),
+          kind = lang_config.kind_map and lang_config.kind_map[child_type] or child_type,
+          range = get_range(child),
+        })
+        parent_scope:add_child(symbol_node)
+      else
+        -- Transparent pass-through: recurse without creating a node
+        r_walk(child, parent_scope)
+      end
     end
   end
+
+  r_walk(ts_node, parent_scope)
 end
 
 --- Build a ScopeTree from a buffer's Treesitter parse tree.
