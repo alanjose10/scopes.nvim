@@ -36,11 +36,12 @@ end
 --- Recursively walk the Treesitter tree and build ScopeNodes.
 --- @param ts_node TSNode
 --- @param parent_scope ScopeNode
---- @param scope_set table<string, boolean>
---- @param symbol_set table<string, boolean>
 --- @param lang_config LangConfig
 --- @param bufnr number
-local function walk(ts_node, parent_scope, scope_set, symbol_set, lang_config, bufnr)
+local function walk(ts_node, parent_scope, lang_config, bufnr)
+  local scope_set = to_set(lang_config.scope_types)
+  local symbol_set = to_set(lang_config.symbol_types)
+
   for child in ts_node:iter_children() do
     local child_type = child:type()
 
@@ -53,7 +54,7 @@ local function walk(ts_node, parent_scope, scope_set, symbol_set, lang_config, b
         is_error = true,
       })
       parent_scope:add_child(error_node)
-      walk(child, error_node, scope_set, symbol_set, lang_config, bufnr)
+      walk(child, error_node, lang_config, bufnr)
     elseif scope_set[child_type] then
       local scope_node = ScopeNode.new({
         name = lang_config.get_name(child, bufnr),
@@ -61,7 +62,7 @@ local function walk(ts_node, parent_scope, scope_set, symbol_set, lang_config, b
         range = get_range(child),
       })
       parent_scope:add_child(scope_node)
-      walk(child, scope_node, scope_set, symbol_set, lang_config, bufnr)
+      walk(child, scope_node, lang_config, bufnr)
     elseif symbol_set[child_type] then
       local symbol_node = ScopeNode.new({
         name = lang_config.get_name(child, bufnr),
@@ -71,7 +72,7 @@ local function walk(ts_node, parent_scope, scope_set, symbol_set, lang_config, b
       parent_scope:add_child(symbol_node)
     else
       -- Transparent pass-through: recurse without creating a node
-      walk(child, parent_scope, scope_set, symbol_set, lang_config, bufnr)
+      walk(child, parent_scope, lang_config, bufnr)
     end
   end
 end
@@ -111,14 +112,11 @@ function M.build(bufnr)
 
   local root = ScopeNode.new({
     name = file_name,
-    kind = "module",
+    kind = "file",
     range = get_range(ts_root),
   })
 
-  local scope_set = to_set(lang_config.scope_types)
-  local symbol_set = to_set(lang_config.symbol_types)
-
-  walk(ts_root, root, scope_set, symbol_set, lang_config, bufnr)
+  walk(ts_root, root, lang_config, bufnr)
 
   return ScopeTree.new({
     root = root,

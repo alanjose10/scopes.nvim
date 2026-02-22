@@ -104,7 +104,7 @@ describe("backends.treesitter", function()
     it("kind values match kind_map", function()
       local lang_config = require("scopes.lang_config")
       local go_lang = lang_config.build(require("scopes.languages.go"))
-      local valid_kinds = { module = true }
+      local valid_kinds = { file = true }
       for _, kind in pairs(go_lang.kind_map) do
         valid_kinds[kind] = true
       end
