@@ -56,7 +56,7 @@ M.defaults = {
     border = nil,
   },
   display = {
-    icons = true, -- TODO: Not yet used
+    icons = true,
     line_numbers = true, -- TODO: Not yet used
     breadcrumb = true, -- TODO: Not yet used
   },

@@ -1,18 +1,7 @@
 local M = {}
 
 local config = require("scopes.config")
-
-local ICONS = {
-  ["function"] = "󰊕",
-  ["method"] = "󰊕",
-  ["class"] = "󰆧",
-  ["struct"] = "󰆧",
-  ["variable"] = "󰀫",
-  ["const"] = "󰏿",
-  ["type"] = "󰊱",
-  ["block"] = "󰅪",
-  ["module"] = "󰇋",
-}
+local icons = require("scopes.icons")
 
 --- Convert a ScopeNode to a snacks picker item.
 --- @param node ScopeNode
@@ -37,17 +26,21 @@ end
 --- @return table
 function M.format(item, _picker)
   local node = item.node
-  local icon = ICONS[node.kind] or "󰉻"
+  local icon = icons.get_icon(node.kind)
   local name_hl = node.is_error and "DiagnosticError" or "SnacksPickerFile"
   local drill = node:is_scope() and "  " or ""
-  return {
-    { icon .. " ", "SnacksPickerSpecial" },
-    { node.name, name_hl },
+  local cfg = config.get()
+  local result = {}
+  if cfg.display.icons then
+    result[#result + 1] = { icon .. " ", "SnacksPickerSpecial" }
+  end
+  result[#result + 1] = { node.name, name_hl }
+  return vim.list_extend(result, {
     { " " },
     { "[" .. node.kind .. "]", "SnacksPickerComment" },
     { "  :" .. (node.range.start_row + 1), "SnacksPickerLineNr" },
     { drill, "SnacksPickerDir" },
-  }
+  })
 end
 
 --- Open the scope picker for the given navigator.
