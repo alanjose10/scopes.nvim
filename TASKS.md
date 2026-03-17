@@ -110,10 +110,10 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 
 ### 2.4 Icon Support
 
-- [ ] Add icon mappings per symbol kind (function, variable, class, method, type, etc.) using Nerd Font codepoints
-- [ ] Integrate with `nvim-web-devicons` if available, fall back to built-in icon table
-- [ ] Respect `display.icons` config toggle
-- [ ] Show icons in picker item formatting (prefix before symbol name)
+- [x] Add icon mappings per symbol kind (function, variable, class, method, type, etc.) using Nerd Font codepoints
+- [x] Integrate with `nvim-web-devicons` if available, fall back to built-in icon table
+- [x] Respect `display.icons` config toggle
+- [x] Show icons in picker item formatting (prefix before symbol name)
 
 ### 2.5 Additional Language Support
 
