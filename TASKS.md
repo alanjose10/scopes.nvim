@@ -76,8 +76,8 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 - [ ] Verify breadcrumb updates correctly during navigation
 - [ ] Verify fuzzy filtering works within a scope
 - [ ] Verify graceful behavior on files with syntax errors
-- [ ] Revisit validation error handling strategy for ScopeNode/ScopeTree constructors (warn-and-continue vs return nil vs error)
-- [ ] Add sibling-overlap validation to `ScopeNode:add_child()`: warn when the new child's range overlaps an existing sibling's range; for siblings on the same row, also check column ranges are non-overlapping. Decide on log level (WARN vs DEBUG) given that ERROR nodes and some LSP servers can produce touching/overlapping ranges legitimately.
+- [x] Revisit validation error handling strategy for ScopeNode/ScopeTree constructors (warn-and-continue vs return nil vs error)
+- [x] Add sibling-overlap validation to `ScopeNode:add_child()`: warn when the new child's range overlaps an existing sibling's range; for siblings on the same row, also check column ranges are non-overlapping. Decide on log level (WARN vs DEBUG) given that ERROR nodes and some LSP servers can produce touching/overlapping ranges legitimately.
 
 ---
 
@@ -136,7 +136,7 @@ Refactoring tasks identified during code review. None are blocking for functiona
 
 ### TD1: Test Infrastructure
 
-- [ ] **TD1.1** Create `tests/helpers.lua` — extract duplicated test utilities: `find_nodes(root, node_type)` (4× in go_spec/lua_spec), `make_buf(fixture, lang)` buffer setup+teardown (7× across treesitter_spec/go_spec/lua_spec/tree_spec), `find_by_name`, `check_parents`, `check_ranges`, `child_names` (currently only in treesitter_spec), `capture_notify()` (the `vim.notify` stub pattern used 4× in tree_spec with inconsistent global names), `valid_kinds` table (identical in go_spec and lua_spec), `assert_valid_lang_config(cfg)` structural checks (identical block in go_spec and lua_spec)
+- [x] **TD1.1** Create `tests/helpers.lua` — extract duplicated test utilities: `find_nodes(root, node_type)` (4× in go_spec/lua_spec), `make_buf(fixture, lang)` buffer setup+teardown (7× across treesitter_spec/go_spec/lua_spec/tree_spec), `find_by_name`, `check_parents`, `check_ranges`, `child_names` (currently only in treesitter_spec), `capture_notify()` (the `vim.notify` stub pattern used 4× in tree_spec with inconsistent global names), `valid_kinds` table (identical in go_spec and lua_spec), `assert_valid_lang_config(cfg)` structural checks (identical block in go_spec and lua_spec)
 - [ ] **TD1.2** Delete or restore the commented-out test at `tests/backends/treesitter_spec.lua:132-138` (`func_literal inside RunWithCallback`) — it has no explanation for why it was disabled
 
 ### TD2: Naming & Conceptual Clarity
