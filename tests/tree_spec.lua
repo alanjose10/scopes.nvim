@@ -342,6 +342,113 @@ describe("ScopeNode", function()
         assert.are.equal(1, #parent.children)
         assert.are.equal(child, parent.children[1])
       end)
+
+      describe("sibling overlap", function()
+        local debug_msgs, restore_debug
+
+        before_each(function()
+          local orig = vim.notify
+          debug_msgs = {}
+          vim.notify = function(msg, level)
+            if level == vim.log.levels.DEBUG then
+              table.insert(debug_msgs, msg)
+            end
+          end
+          restore_debug = function()
+            vim.notify = orig
+          end
+        end)
+
+        after_each(function()
+          restore_debug()
+        end)
+
+        local function make_parent()
+          return ScopeNode.new({
+            name = "root",
+            kind = "function",
+            range = { start_row = 0, start_col = 0, end_row = 20, end_col = 0 },
+          })
+        end
+
+        it("does not warn when siblings have non-overlapping row ranges", function()
+          local parent = make_parent()
+          local a = ScopeNode.new({ name = "a", kind = "variable",
+            range = { start_row = 1, start_col = 0, end_row = 3, end_col = 0 } })
+          local b = ScopeNode.new({ name = "b", kind = "variable",
+            range = { start_row = 5, start_col = 0, end_row = 7, end_col = 0 } })
+          parent:add_child(a)
+          parent:add_child(b)
+          assert.are.equal(0, #debug_msgs)
+        end)
+
+        it("does not warn for touching ranges (one ends where the next starts, same row)", function()
+          local parent = make_parent()
+          local a = ScopeNode.new({ name = "a", kind = "variable",
+            range = { start_row = 1, start_col = 0, end_row = 1, end_col = 5 } })
+          local b = ScopeNode.new({ name = "b", kind = "variable",
+            range = { start_row = 1, start_col = 5, end_row = 1, end_col = 10 } })
+          parent:add_child(a)
+          parent:add_child(b)
+          assert.are.equal(0, #debug_msgs)
+        end)
+
+        it("does not warn for touching ranges across rows", function()
+          local parent = make_parent()
+          local a = ScopeNode.new({ name = "a", kind = "variable",
+            range = { start_row = 1, start_col = 0, end_row = 3, end_col = 5 } })
+          local b = ScopeNode.new({ name = "b", kind = "variable",
+            range = { start_row = 3, start_col = 5, end_row = 5, end_col = 0 } })
+          parent:add_child(a)
+          parent:add_child(b)
+          assert.are.equal(0, #debug_msgs)
+        end)
+
+        it("emits DEBUG when new child overlaps an existing sibling (row overlap)", function()
+          local parent = make_parent()
+          local a = ScopeNode.new({ name = "a", kind = "function",
+            range = { start_row = 1, start_col = 0, end_row = 5, end_col = 0 } })
+          local b = ScopeNode.new({ name = "b", kind = "variable",
+            range = { start_row = 3, start_col = 0, end_row = 7, end_col = 0 } })
+          parent:add_child(a)
+          parent:add_child(b)
+          assert.are.equal(1, #debug_msgs)
+          assert.is_truthy(debug_msgs[1]:find("overlap"))
+          assert.is_truthy(debug_msgs[1]:find("b"))
+          assert.is_truthy(debug_msgs[1]:find("a"))
+        end)
+
+        it("emits DEBUG when single-row siblings have overlapping columns", function()
+          local parent = make_parent()
+          local a = ScopeNode.new({ name = "a", kind = "variable",
+            range = { start_row = 1, start_col = 0, end_row = 1, end_col = 8 } })
+          local b = ScopeNode.new({ name = "b", kind = "variable",
+            range = { start_row = 1, start_col = 5, end_row = 1, end_col = 12 } })
+          parent:add_child(a)
+          parent:add_child(b)
+          assert.are.equal(1, #debug_msgs)
+          assert.is_truthy(debug_msgs[1]:find("overlap"))
+        end)
+
+        it("still adds the child even when siblings overlap", function()
+          local parent = make_parent()
+          local a = ScopeNode.new({ name = "a", kind = "function",
+            range = { start_row = 1, start_col = 0, end_row = 5, end_col = 0 } })
+          local b = ScopeNode.new({ name = "b", kind = "variable",
+            range = { start_row = 3, start_col = 0, end_row = 7, end_col = 0 } })
+          parent:add_child(a)
+          parent:add_child(b)
+          assert.are.equal(2, #parent.children)
+        end)
+
+        it("does not check overlap when only one child exists", function()
+          local parent = make_parent()
+          local a = ScopeNode.new({ name = "a", kind = "variable",
+            range = { start_row = 1, start_col = 0, end_row = 3, end_col = 0 } })
+          parent:add_child(a)
+          assert.are.equal(0, #debug_msgs)
+        end)
+      end)
     end)
 
     it("sets grandchild parent to child, not root", function()

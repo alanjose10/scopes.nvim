@@ -41,10 +41,10 @@ local function validate_range(range, label)
 end
 
 --- Create a new ScopeNode.
+--- Validation uses warn-and-continue: always returns a node, emits WARN on bad inputs.
 --- @param opts {name: string, kind: string, range: table, children?: ScopeNode[], parent?: ScopeNode, is_error?: boolean}
 --- @return ScopeNode
 function ScopeNode.new(opts)
-  -- TODO: revisit validation strategy (warn vs return nil vs error)
   if type(opts) ~= "table" then
     vim.notify("scopes.nvim: ScopeNode.new(): opts must be a table", vim.log.levels.WARN)
     opts = {}
@@ -101,11 +101,33 @@ function ScopeNode:add_child(child)
       )
     end
   end
-  -- TODO: validate that the new child's range does not overlap any existing sibling.
-  -- For siblings on different rows: ranges should be mutually exclusive (no row overlap).
-  -- For siblings sharing the same start_row and end_row: column ranges should also be
-  -- mutually exclusive. Consider emitting at DEBUG level rather than WARN to avoid noise
-  -- from Treesitter ERROR nodes and certain LSP servers that return adjacent/touching ranges.
+  -- Sibling-overlap check at DEBUG level. Touching ranges (one ends exactly where another
+  -- starts) are intentionally not flagged — Treesitter ERROR nodes and some LSP servers
+  -- produce adjacent ranges legitimately.
+  for _, sibling in ipairs(self.children) do
+    if sibling.range and child.range then
+      local sr = sibling.range
+      local cr = child.range
+      local overlaps = not (
+        cr.end_row < sr.start_row
+        or sr.end_row < cr.start_row
+        or (cr.end_row == sr.start_row and cr.end_col <= sr.start_col)
+        or (sr.end_row == cr.start_row and sr.end_col <= cr.start_col)
+      )
+      if overlaps then
+        vim.notify(
+          "scopes.nvim: ScopeNode:add_child(): child '"
+            .. (child.name or "?")
+            .. "' overlaps sibling '"
+            .. (sibling.name or "?")
+            .. "' in '"
+            .. (self.name or "?")
+            .. "'",
+          vim.log.levels.DEBUG
+        )
+      end
+    end
+  end
   child.parent = self
   table.insert(self.children, child)
 end
@@ -119,10 +141,10 @@ local ScopeTree = {}
 ScopeTree.__index = ScopeTree
 
 --- Create a new ScopeTree.
+--- Validation uses warn-and-continue: always returns a tree, emits WARN on bad inputs.
 --- @param opts {root: ScopeNode, source: "treesitter"|"lsp", bufnr: number, lang: string}
 --- @return ScopeTree
 function ScopeTree.new(opts)
-  -- TODO: revisit validation strategy (warn vs return nil vs error)
   if type(opts) ~= "table" then
     vim.notify("scopes.nvim: ScopeTree.new(): opts must be a table", vim.log.levels.WARN)
     opts = {}
