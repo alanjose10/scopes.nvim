@@ -155,12 +155,23 @@ function M.capture_notify()
   end, clear
 end
 
+--- Valid kind strings for all built-in language configs.
+M.valid_kinds = {
+  ["function"] = true,
+  ["method"] = true,
+  ["variable"] = true,
+  ["type"] = true,
+  ["const"] = true,
+  ["block"] = true,
+  ["class"] = true,
+}
+
 --- Assert language-agnostic structural invariants on a built LangConfig.
 --- Replaces the repeated "structural checks" describe block in language spec files.
 --- @param cfg LangConfig
 function M.assert_valid_lang_config(cfg)
   assert.is_true(#cfg.scope_types > 0, "scope_types is empty")
-  assert.is_true(#cfg.symbol_types > 0, "symbol_types is empty")
+  -- symbol_types may be empty for data-format languages (YAML, JSON)
   assert.are.equal("function", type(cfg.get_name), "get_name is not a function")
   for _, st in ipairs(cfg.scope_types) do
     assert.are.equal("string", type(st), "scope_types entry is not a string: " .. tostring(st))

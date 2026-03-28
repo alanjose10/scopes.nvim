@@ -83,12 +83,17 @@ A breadcrumb trail in the picker title shows your current position in the scope 
 
 ## Supported Languages
 
-| Language | Status |
-|---|---|
-| Go | Phase 1 (in progress) |
-| Lua | Phase 1 (in progress) |
-| TypeScript | Phase 2 (planned) |
-| Python | Phase 2 (planned) |
+| Language | Treesitter parser | Scopes |
+|---|---|---|
+| Go | `go` | Functions, methods, types, control flow, imports, variables |
+| Lua | `lua` | Functions, control flow, variables |
+| Python | `python` | Functions, classes, control flow, assignments |
+| YAML | `yaml` | Nested mappings (drillable key-value pairs) |
+| JSON | `json` | Nested objects (drillable key-value pairs) |
+| BUILD / Starlark | `python`* | Build rules (name extracted from `name` kwarg), `def` blocks, variables |
+| TypeScript | — | Planned |
+
+\* BUILD files (Bazel, [Please](https://please.build), Buck) use the Python parser since Starlark is a Python subset. No filetype changes are made — LSP and diagnostics are unaffected.
 
 Adding a new language is a single file with Treesitter node type mappings. See `lua/scopes/languages/` for examples.
 

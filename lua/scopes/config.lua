@@ -6,6 +6,7 @@
 --- @field display scopes.DisplayConfig
 --- @field treesitter scopes.TreesitterConfig
 --- @field cache scopes.CacheConfig
+--- @field filename_parsers table<string, string|{parser: string, config: string}>  Maps buffer basename to a treesitter parser override. Value is either a parser language string, or a table with `parser` (treesitter lang) and `config` (lang config name) to decouple them. Does not change the buffer filetype — no LSP or diagnostics side effects.
 
 --- @class scopes.KeymapConfig
 --- @field open string
@@ -67,6 +68,23 @@ M.defaults = {
   cache = {
     enabled = true,
     debounce_ms = 300,
+  },
+  -- Maps buffer basename to parser/config overrides for files Neovim doesn't assign a
+  -- filetype to. Scopes uses the specified parser and lang config internally without
+  -- touching the buffer's filetype — no LSP, diagnostics, or highlighting side effects.
+  --
+  -- Each value is either:
+  --   a string  → used as both the treesitter parser language and the lang config name
+  --   a table   → { parser = "...", config = "..." } to decouple them
+  --
+  -- BUILD files use the Python parser (Starlark is a Python subset) but the bzl
+  -- lang config so that build rules (go_binary, go_library, etc.) appear as scopes.
+  filename_parsers = {
+    BUILD = { parser = "python", config = "bzl" },
+    ["BUILD.bazel"] = { parser = "python", config = "bzl" },
+    ["BUILD.plz"] = { parser = "python", config = "bzl" },
+    WORKSPACE = { parser = "python", config = "bzl" },
+    ["WORKSPACE.bazel"] = { parser = "python", config = "bzl" },
   },
 }
 

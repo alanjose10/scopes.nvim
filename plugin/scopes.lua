@@ -3,6 +3,7 @@ if vim.g.loaded_scopes then
 end
 vim.g.loaded_scopes = true
 
+
 vim.api.nvim_create_user_command("ScopeOpen", function()
   require("scopes").open()
 end, { desc = "Open scope picker at cursor position" })
