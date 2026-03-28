@@ -118,9 +118,14 @@ Derived from the [PRD](scopes-nvim-prd.md). Tasks are ordered by dependency with
 ### 2.5 Additional Language Support
 
 - [ ] Create `lua/scopes/languages/typescript.lua` — scope types (`function_declaration`, `arrow_function`, `class_declaration`, `method_definition`, `if_statement`, `for_statement`) and symbol types (`variable_declarator`, `property_signature`, `type_alias_declaration`)
-- [ ] Create `lua/scopes/languages/python.lua` — scope types (`function_definition`, `class_definition`, `if_statement`, `for_statement`, `while_statement`, `with_statement`) and symbol types (`assignment`, `global_statement`)
-- [ ] Add test fixtures: `tests/fixtures/sample.ts`, `tests/fixtures/sample.py`
-- [ ] Write tree-building tests for TypeScript and Python fixtures
+- [x] Create `lua/scopes/languages/python.lua` — scope types (`function_definition`, `class_definition`, `if_statement`, `for_statement`, `while_statement`, `with_statement`) and symbol types (`assignment`)
+- [x] Create `lua/scopes/languages/bzl.lua` — Starlark/BUILD files (Bazel, Please build system); scope types (`function_definition`, `call`) and symbol types (`assignment`); call names extracted from `name` keyword argument; requires `bzl` treesitter parser (nvim-treesitter: starlark)
+- [x] Create `lua/scopes/languages/yaml.lua` — scope type `block_mapping_pair` (key-named drillable container); no symbol types; name extracted from `key` field
+- [x] Create `lua/scopes/languages/json.lua` — scope type `pair` (key-named drillable container); no symbol types; name extracted from `key` field with quote stripping
+- [x] Add test fixtures: `tests/fixtures/sample.py`, `tests/fixtures/sample.bzl`, `tests/fixtures/sample.yaml`, `tests/fixtures/sample.json`
+- [x] Write language spec tests: `tests/languages/python_spec.lua`, `tests/languages/bzl_spec.lua`, `tests/languages/yaml_spec.lua`, `tests/languages/json_spec.lua`
+- [ ] Add test fixtures: `tests/fixtures/sample.ts`
+- [ ] Write tree-building tests for TypeScript fixture
 - [ ] Test indentation-based Python scoping thoroughly
 
 ### 2.6 Display Options

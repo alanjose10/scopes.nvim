@@ -86,13 +86,31 @@ end
 --- @param bufnr number
 --- @return ScopeTree|nil
 function M.build(bufnr)
-  local ok, parser = pcall(vim.treesitter.get_parser, bufnr)
+  local cfg = require("scopes.config").get()
+
+  -- Check for a filename-based parser/config override (e.g. BUILD files using the Python
+  -- parser with the bzl lang config). This lets scopes parse files that have no Neovim
+  -- filetype without touching the buffer's filetype — LSP, diagnostics, and highlighting
+  -- are unaffected.
+  local fname = vim.fn.fnamemodify(vim.api.nvim_buf_get_name(bufnr), ":t")
+  local fname_override = cfg.filename_parsers and cfg.filename_parsers[fname]
+  local forced_parser = type(fname_override) == "string" and fname_override
+    or (type(fname_override) == "table" and fname_override.parser)
+  local forced_config = type(fname_override) == "table" and fname_override.config
+
+  local ok, parser
+  if forced_parser then
+    ok, parser = pcall(vim.treesitter.get_parser, bufnr, forced_parser)
+  else
+    ok, parser = pcall(vim.treesitter.get_parser, bufnr)
+  end
+
   if not ok or not parser then
     vim.notify("scopes.nvim: no treesitter parser for buffer " .. bufnr, vim.log.levels.WARN)
     return nil
   end
 
-  local lang = parser:lang()
+  local lang = forced_config or parser:lang()
 
   local lang_config = lang_config_mod.load(lang)
   if not lang_config then
