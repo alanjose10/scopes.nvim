@@ -28,7 +28,7 @@ function M.setup(opts)
   vim.api.nvim_create_autocmd({ "TextChanged", "TextChangedI", "BufWritePost" }, {
     group = vim.api.nvim_create_augroup("scopes_cache_invalidate", { clear = true }),
     callback = function(ev)
-      if vim.bo[ev.buf].buftype ~= "" then
+      if vim.api.nvim_get_option_value("buftype", { buf = ev.buf }) ~= "" then
         return
       end
       log.debug("cache invalidated buf=" .. ev.buf .. " event=" .. ev.event)
@@ -39,7 +39,7 @@ function M.setup(opts)
   vim.api.nvim_create_autocmd({ "BufUnload", "BufWipeout" }, {
     group = vim.api.nvim_create_augroup("scopes_cache_cleanup", { clear = true }),
     callback = function(ev)
-      if vim.bo[ev.buf].buftype ~= "" then
+      if vim.api.nvim_get_option_value("buftype", { buf = ev.buf }) ~= "" then
         return
       end
       log.debug("cache cleaned up buf=" .. ev.buf .. " event=" .. ev.event)
@@ -53,7 +53,7 @@ end
 function M.open(opts)
   opts = opts or {}
   local bufnr = vim.api.nvim_get_current_buf()
-  local cursor_row = vim.fn.line(".") - 1 -- 0-indexed
+  local cursor_row = vim.api.nvim_win_get_cursor(0)[1] - 1 -- 0-indexed
 
   local scope_tree = require("scopes.tree").build(bufnr)
   if not scope_tree then
