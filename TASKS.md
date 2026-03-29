@@ -214,3 +214,9 @@ Refactoring tasks identified during code review. None are blocking for functiona
 - Treesitter tree build completes in under 20ms for typical source files
 - Drill-down/go-up transitions feel instant (no perceptible lag)
 - Graceful degradation on syntax errors (no crashes, partial tree shown)
+
+
+## Misc
+
+- [ ] Setup CI with github actions
+- [ ] Setup an action to automate release and versioning
