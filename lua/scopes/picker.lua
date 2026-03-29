@@ -48,6 +48,9 @@ end
 --- @param split_mode "current"|"vsplit"|"hsplit"
 --- @param target_win number
 local function open_at(range, split_mode, target_win)
+  if not range then
+    return
+  end
   if not vim.api.nvim_win_is_valid(target_win) then
     return
   end
@@ -147,6 +150,28 @@ function M.open(nav, bufnr)
           })
         end
       end,
+
+      scope_split_v = function(picker)
+        local item = picker:current({ resolve = false })
+        if not item then
+          return
+        end
+        confirmed = true
+        local pos = nav:enter(item.node)
+        picker:close()
+        open_at(pos, "vsplit", main_win)
+      end,
+
+      scope_split_h = function(picker)
+        local item = picker:current({ resolve = false })
+        if not item then
+          return
+        end
+        confirmed = true
+        local pos = nav:enter(item.node)
+        picker:close()
+        open_at(pos, "hsplit", main_win)
+      end,
     },
 
     win = {
@@ -154,6 +179,8 @@ function M.open(nav, bufnr)
         keys = {
           ["<Tab>"] = { "scope_drill", mode = { "i", "n" } },
           ["<S-Tab>"] = { "scope_up", mode = { "i", "n" } },
+          [cfg.picker.split_vertical] = { "scope_split_v", mode = { "i", "n" } },
+          [cfg.picker.split_horizontal] = { "scope_split_h", mode = { "i", "n" } },
         },
       },
     },
