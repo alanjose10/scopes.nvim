@@ -33,8 +33,7 @@ jobs:
         run: |
           nvim --headless \
             --cmd "set rtp^=/tmp/nvim-plugins/nvim-treesitter" \
-            -c "lua require('nvim-treesitter.install').prefer_git = false; require('nvim-treesitter.configs').setup({ ensure_installed = {'go','lua','python','yaml','json','typescript'}, sync_install = true })" \
-            -c "qa"
+            -u scripts/install_parsers.lua
 
       - name: Run tests
         run: make test
