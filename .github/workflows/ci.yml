@@ -29,12 +29,15 @@ jobs:
           git clone --depth=1 https://github.com/folke/snacks.nvim            /tmp/nvim-plugins/snacks.nvim
 
       - name: Install Treesitter parsers
+        timeout-minutes: 10
         run: |
-          nvim --headless \
-            --cmd "set rtp+=/tmp/nvim-plugins/nvim-treesitter" \
-            -c "lua require('nvim-treesitter.install').prefer_git = false" \
-            -c "TSInstallSync go lua python yaml json typescript" \
-            -c "qa"
+          for lang in go lua python yaml json typescript; do
+            nvim --headless \
+              --cmd "set rtp+=/tmp/nvim-plugins/nvim-treesitter" \
+              -c "lua require('nvim-treesitter.install').prefer_git = false" \
+              -c "TSInstallSync ${lang}" \
+              -c "qa"
+          done
 
       - name: Run tests
         run: make test
