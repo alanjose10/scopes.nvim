@@ -31,13 +31,10 @@ jobs:
       - name: Install Treesitter parsers
         timeout-minutes: 10
         run: |
-          for lang in go lua python yaml json typescript; do
-            nvim --headless \
-              --cmd "set rtp+=/tmp/nvim-plugins/nvim-treesitter" \
-              -c "lua require('nvim-treesitter.install').prefer_git = false" \
-              -c "TSInstallSync ${lang}" \
-              -c "qa"
-          done
+          nvim --headless \
+            --cmd "set rtp^=/tmp/nvim-plugins/nvim-treesitter" \
+            -c "lua require('nvim-treesitter.install').prefer_git = false; require('nvim-treesitter.install').install({'go','lua','python','yaml','json','typescript'}, { with_sync = true })" \
+            -c "qa"
 
       - name: Run tests
         run: make test
