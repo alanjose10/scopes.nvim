@@ -43,6 +43,33 @@ function M.format(item, _picker)
   })
 end
 
+--- Jump to a range in the given window, optionally opening a split first.
+--- @param range {row: number, col: number}
+--- @param split_mode "current"|"vsplit"|"hsplit"
+--- @param target_win number
+local function open_at(range, split_mode, target_win)
+  if not range then
+    return
+  end
+  if not vim.api.nvim_win_is_valid(target_win) then
+    return
+  end
+  -- Ensure focus is on target_win before splitting; no-op for "current" mode.
+  vim.api.nvim_set_current_win(target_win)
+  local dest_win
+  if split_mode == "vsplit" then
+    dest_win = vim.api.nvim_open_win(0, true, { split = "right" })
+  elseif split_mode == "hsplit" then
+    dest_win = vim.api.nvim_open_win(0, true, { split = "below" })
+  elseif split_mode == "current" then
+    dest_win = target_win
+  else
+    vim.notify("scopes.nvim: unknown split_mode: " .. tostring(split_mode), vim.log.levels.WARN)
+    return
+  end
+  vim.api.nvim_win_set_cursor(dest_win, { range.row + 1, range.col })
+end
+
 --- Open the scope picker for the given navigator.
 --- @param nav Navigator
 --- @param bufnr number
@@ -87,9 +114,7 @@ function M.open(nav, bufnr)
       confirmed = true
       local pos = nav:enter(item.node)
       picker:close()
-      if vim.api.nvim_win_is_valid(main_win) then
-        vim.api.nvim_win_set_cursor(main_win, { pos.row + 1, pos.col })
-      end
+      open_at(pos, "current", main_win)
     end,
 
     on_close = function(_picker)
@@ -125,6 +150,28 @@ function M.open(nav, bufnr)
           })
         end
       end,
+
+      scope_split_v = function(picker)
+        local item = picker:current({ resolve = false })
+        if not item then
+          return
+        end
+        confirmed = true
+        local pos = nav:enter(item.node)
+        picker:close()
+        open_at(pos, "vsplit", main_win)
+      end,
+
+      scope_split_h = function(picker)
+        local item = picker:current({ resolve = false })
+        if not item then
+          return
+        end
+        confirmed = true
+        local pos = nav:enter(item.node)
+        picker:close()
+        open_at(pos, "hsplit", main_win)
+      end,
     },
 
     win = {
@@ -132,6 +179,8 @@ function M.open(nav, bufnr)
         keys = {
           ["<Tab>"] = { "scope_drill", mode = { "i", "n" } },
           ["<S-Tab>"] = { "scope_up", mode = { "i", "n" } },
+          [cfg.picker.split_vertical] = { "scope_split_v", mode = { "i", "n" } },
+          [cfg.picker.split_horizontal] = { "scope_split_h", mode = { "i", "n" } },
         },
       },
     },

@@ -17,6 +17,8 @@
 --- @field drill_down string
 --- @field go_up string
 --- @field close string[]
+--- @field split_vertical string
+--- @field split_horizontal string
 --- @field backend "snacks"|"telescope"
 --- @field preview boolean
 --- @field width? number
@@ -50,6 +52,8 @@ M.defaults = {
     drill_down = "<Tab>",
     go_up = "<S-Tab>",
     close = { "<Esc>", "q" },
+    split_vertical = "<C-v>",
+    split_horizontal = "<C-s>",
     backend = "snacks",
     preview = true,
     width = nil,

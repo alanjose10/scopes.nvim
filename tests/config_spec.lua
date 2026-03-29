@@ -27,6 +27,14 @@ describe("scopes.config", function()
       assert.is_nil(config.defaults.picker.border)
     end)
 
+    it("has split_vertical default", function()
+      assert.are.equal("<C-v>", config.defaults.picker.split_vertical)
+    end)
+
+    it("has split_horizontal default", function()
+      assert.are.equal("<C-s>", config.defaults.picker.split_horizontal)
+    end)
+
     it("has display defaults", function()
       assert.is_true(config.defaults.display.icons)
       assert.is_true(config.defaults.display.line_numbers)
@@ -93,6 +101,20 @@ describe("scopes.config", function()
       assert.are.equal("<leader>sO", cfg.keymaps.open_root)
       assert.is_false(cfg.display.icons)
       assert.is_true(cfg.display.line_numbers)
+    end)
+
+    it("allows overriding split_vertical key", function()
+      local cfg = config.merge({ picker = { split_vertical = "<C-x>v" } })
+      assert.are.equal("<C-x>v", cfg.picker.split_vertical)
+      -- other picker defaults preserved
+      assert.are.equal("<C-s>", cfg.picker.split_horizontal)
+    end)
+
+    it("allows overriding split_horizontal key", function()
+      local cfg = config.merge({ picker = { split_horizontal = "<C-x>s" } })
+      assert.are.equal("<C-x>s", cfg.picker.split_horizontal)
+      -- other picker defaults preserved
+      assert.are.equal("<C-v>", cfg.picker.split_vertical)
     end)
 
     it("merges list values by index", function()
