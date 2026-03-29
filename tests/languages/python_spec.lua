@@ -33,6 +33,14 @@ describe("languages.python", function()
     it("contains assignment", function()
       assert.is_true(vim.tbl_contains(python.symbol_types, "assignment"))
     end)
+
+    it("contains import_statement", function()
+      assert.is_true(vim.tbl_contains(python.symbol_types, "import_statement"))
+    end)
+
+    it("contains import_from_statement", function()
+      assert.is_true(vim.tbl_contains(python.symbol_types, "import_from_statement"))
+    end)
   end)
 
   describe("no overlap between scope_types and symbol_types", function()
@@ -186,6 +194,27 @@ describe("languages.python", function()
       assert.is_true(vim.tbl_contains(names, "MAX_SIZE"))
       assert.is_true(vim.tbl_contains(names, "DEFAULT_NAME"))
     end)
+
+    it("extracts import_statement module name", function()
+      local root = get_root()
+      local nodes = helpers.find_ts_nodes(root, "import_statement")
+      local names = {}
+      for _, node in ipairs(nodes) do
+        table.insert(names, python.get_name(node, bufnr))
+      end
+      assert.is_true(vim.tbl_contains(names, "os"), "expected 'os' from 'import os'")
+      assert.is_true(vim.tbl_contains(names, "sys"), "expected 'sys' from 'import sys as system'")
+    end)
+
+    it("extracts import_from_statement module name", function()
+      local root = get_root()
+      local nodes = helpers.find_ts_nodes(root, "import_from_statement")
+      local names = {}
+      for _, node in ipairs(nodes) do
+        table.insert(names, python.get_name(node, bufnr))
+      end
+      assert.is_true(vim.tbl_contains(names, "pathlib"), "expected 'pathlib' from 'from pathlib import Path'")
+    end)
   end)
 
   describe("get_name edge cases", function()
@@ -218,6 +247,34 @@ describe("languages.python", function()
       local nodes = helpers.find_ts_nodes(root, "while_statement")
       assert.is_true(#nodes > 0)
       assert.are.equal("while", python.get_name(nodes[1], bufnr))
+    end)
+
+    it("returns module name not alias for aliased import", function()
+      local root = parse_py("import numpy as np\n")
+      local nodes = helpers.find_ts_nodes(root, "import_statement")
+      assert.is_true(#nodes > 0, "expected at least one import_statement")
+      assert.are.equal("numpy", python.get_name(nodes[1], bufnr))
+    end)
+
+    it("returns all module names joined for multi-name import", function()
+      local root = parse_py("import os, sys\n")
+      local nodes = helpers.find_ts_nodes(root, "import_statement")
+      assert.is_true(#nodes > 0, "expected at least one import_statement")
+      assert.are.equal("os, sys", python.get_name(nodes[1], bufnr))
+    end)
+
+    it("returns dotted module name for from-import", function()
+      local root = parse_py("from os.path import join\n")
+      local nodes = helpers.find_ts_nodes(root, "import_from_statement")
+      assert.is_true(#nodes > 0, "expected at least one import_from_statement")
+      assert.are.equal("os.path", python.get_name(nodes[1], bufnr))
+    end)
+
+    it("returns '.' for relative import", function()
+      local root = parse_py("from . import something\n")
+      local nodes = helpers.find_ts_nodes(root, "import_from_statement")
+      assert.is_true(#nodes > 0, "expected at least one import_from_statement")
+      assert.are.equal(".", python.get_name(nodes[1], bufnr))
     end)
   end)
 end)
